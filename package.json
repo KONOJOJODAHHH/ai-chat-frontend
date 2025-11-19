@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.2",
+    "@splinetool/runtime": "^1.11.4",
     "@vueuse/core": "^14.0.0",
     "axios": "^1.13.2",
     "clsx": "^2.1.1",

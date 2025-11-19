@@ -1,49 +1,67 @@
 <template>
   <div class="login-container">
-    <div class="login-left">
-      <div class="brand-section">
-        <div class="brand-logo">
-          <i class="fa-solid fa-cube"></i>
+    <!-- Spline 3D 背景 -->
+    <div class="spline-background">
+      <Spline
+        :scene="sceneUrl"
+        class="spline-canvas"
+      >
+        <div class="spline-loading">
+          <div class="loading-spinner">
+            <div class="spinner-ring"></div>
+            <div class="spinner-ring"></div>
+            <div class="spinner-ring"></div>
+          </div>
+          <p class="loading-text">Loading...</p>
         </div>
-        <h1 class="brand-title">MATRIX OS</h1>
-        <p class="brand-subtitle">Next Generation AI Chat Platform</p>
-        
-        <div class="feature-list">
-          <div class="feature-item">
-            <i class="fa-solid fa-bolt"></i>
-            <span>多模型支持</span>
-          </div>
-          <div class="feature-item">
-            <i class="fa-solid fa-shield-halved"></i>
-            <span>安全可靠</span>
-          </div>
-          <div class="feature-item">
-            <i class="fa-solid fa-wand-magic-sparkles"></i>
-            <span>智能提示</span>
-          </div>
-        </div>
+      </Spline>
+    </div>
 
-        <div class="cyber-decoration">
-          <div class="cyber-line"></div>
-          <div class="cyber-line"></div>
-          <div class="cyber-line"></div>
+    <!-- 品牌标识 -->
+    <div class="brand-logo">
+      <div class="logo-icon">
+        <div class="logo-inner">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
         </div>
+      </div>
+      <div class="logo-text">
+        <span class="logo-title">Matrix</span>
+        <span class="logo-subtitle">AI Intelligence</span>
       </div>
     </div>
 
-    <div class="login-right">
-      <div class="login-card glass-card">
-        <div class="card-header">
-          <h2>欢迎回来</h2>
-          <p>登录您的账号以继续</p>
-        </div>
+    <!-- 装饰元素 -->
+    <div class="deco-elements">
+      <!-- 连接线 -->
+      <div class="connect-line"></div>
+      
+      <!-- 浮动粒子 -->
+      <div class="particle particle-1"></div>
+      <div class="particle particle-2"></div>
+      <div class="particle particle-3"></div>
+      <div class="particle particle-4"></div>
+      <div class="particle particle-5"></div>
+      <div class="particle particle-6"></div>
+      
+      <!-- 光晕效果 -->
+      <div class="glow-orb glow-1"></div>
+      <div class="glow-orb glow-2"></div>
+    </div>
 
+    <!-- 登录表单 -->
+    <div class="form-wrapper">
+      <div class="login-card">
+        <div class="card-header">
+          <h2 class="card-title">登录</h2>
+        </div>
+        
         <form @submit.prevent="onSubmit" class="login-form">
           <div class="form-group">
-            <label class="form-label">
-              <i class="fa-solid fa-user"></i>
-              <span>用户名</span>
-            </label>
+            <label class="form-label">用户名</label>
             <div class="input-wrapper">
               <input 
                 v-model="form.username" 
@@ -52,16 +70,15 @@
                 class="form-input"
                 autocomplete="username"
               />
-              <div class="input-border"></div>
             </div>
-            <span v-if="errors.username" class="error-text">{{ errors.username }}</span>
+            <span v-if="errors.username" class="error-text">
+              <i class="fa-solid fa-circle-exclamation"></i>
+              {{ errors.username }}
+            </span>
           </div>
 
           <div class="form-group">
-            <label class="form-label">
-              <i class="fa-solid fa-lock"></i>
-              <span>密码</span>
-            </label>
+            <label class="form-label">密码</label>
             <div class="input-wrapper">
               <input 
                 v-model="form.password" 
@@ -74,56 +91,38 @@
                 type="button" 
                 class="password-toggle" 
                 @click="showPassword = !showPassword"
+                tabindex="-1"
               >
                 <i :class="showPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
               </button>
-              <div class="input-border"></div>
             </div>
-            <span v-if="errors.password" class="error-text">{{ errors.password }}</span>
+            <span v-if="errors.password" class="error-text">
+              <i class="fa-solid fa-circle-exclamation"></i>
+              {{ errors.password }}
+            </span>
           </div>
 
-          <div class="form-options">
-            <label class="checkbox-wrapper">
-              <input type="checkbox" v-model="form.remember" />
-              <span class="checkbox-custom"></span>
-              <span class="checkbox-label">记住我</span>
-            </label>
-            <router-link to="/register" class="text-link">
-              没有账号？立即注册
-            </router-link>
-          </div>
+          <label class="checkbox-label">
+            <input type="checkbox" v-model="form.remember" />
+            <span class="checkbox-text">记住我</span>
+          </label>
 
           <button 
             type="submit" 
-            class="submit-button" 
+            class="submit-btn" 
             :disabled="!canSubmit || loading"
-            :class="{ loading }"
           >
-            <span v-if="!loading" class="button-content">
-              <i class="fa-solid fa-arrow-right"></i>
-              <span>登录</span>
-            </span>
-            <span v-else class="button-loading">
-              <i class="fa-solid fa-spinner fa-spin"></i>
+            <span v-if="!loading">登录</span>
+            <span v-else class="loading-content">
+              <span class="spinner-small"></span>
               <span>登录中...</span>
             </span>
           </button>
         </form>
 
-        <div class="quick-login">
-          <div class="divider">
-            <span>快捷登录</span>
-          </div>
-          <div class="quick-buttons">
-            <button class="quick-btn" title="管理员快捷登录" @click="quickLogin('admin')">
-              <i class="fa-solid fa-shield-halved"></i>
-              <span>管理员</span>
-            </button>
-            <button class="quick-btn" title="普通用户快捷登录" @click="quickLogin('user')">
-              <i class="fa-solid fa-user"></i>
-              <span>用户</span>
-            </button>
-          </div>
+        <div class="card-footer">
+          <span class="footer-text">还没有账号？</span>
+          <router-link to="/register" class="link">立即注册</router-link>
         </div>
       </div>
     </div>
@@ -136,6 +135,9 @@ import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
 import { authAPI } from '@/utils/api'
 import { useAuthStore } from '@/composables/useAuthStore'
+import Spline from '@/components/Spline.vue'
+
+const sceneUrl = "https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode"
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -184,7 +186,7 @@ const onSubmit = async () => {
       localStorage.setItem('lastUsername', res.user.username)
       
       ElMessage.success({
-        message: `欢迎回来，${res.user.username}！`,
+        message: `登录成功！`,
         duration: 2000,
       })
       
@@ -197,236 +199,329 @@ const onSubmit = async () => {
     loading.value = false
   }
 }
-
-const quickLogin = async (type: 'admin' | 'user') => {
-  form.value.username = type === 'admin' ? 'admin' : 'user'
-  form.value.password = '123456'
-  await onSubmit()
-}
 </script>
 
 <style scoped>
 .login-container {
-  display: flex;
-  min-height: 100vh;
-  background: var(--bg-color);
   position: relative;
+  min-height: 100vh;
+  width: 100%;
   overflow: hidden;
-}
-
-/* 左侧品牌区 */
-.login-left {
-  flex: 1;
+  --holo-primary: #6cfde4;
+  --holo-secondary: #805bff;
+  --holo-surface: rgba(4, 4, 4, 0.82);
+  --grid-color: rgba(255, 255, 255, 0.04);
+  background: radial-gradient(circle at 15% 25%, rgba(112, 209, 255, 0.25), rgba(0, 0, 0, 0.95) 55%), #000;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 60px;
-  position: relative;
-  background: linear-gradient(135deg, rgba(168, 199, 250, 0.03) 0%, transparent 100%);
 }
 
-.login-left::before {
-  content: '';
+
+/* Spline 3D 背景 */
+.spline-background {
   position: absolute;
   top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: 
-    radial-gradient(circle at 20% 30%, rgba(168, 199, 250, 0.1), transparent 40%),
-    radial-gradient(circle at 80% 70%, rgba(99, 102, 241, 0.08), transparent 40%);
-  animation: pulse 8s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 0.5; }
-  50% { opacity: 1; }
-}
-
-.brand-section {
-  max-width: 500px;
-  position: relative;
-  z-index: 1;
-}
-
-.brand-logo {
-  width: 120px;
-  height: 120px;
-  background: linear-gradient(135deg, var(--accent-primary), var(--accent-hover));
-  border-radius: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 32px;
-  box-shadow: 0 20px 60px rgba(168, 199, 250, 0.3);
-  animation: float 3s ease-in-out infinite;
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
-}
-
-.brand-logo i {
-  font-size: 60px;
-  color: #0a0a0a;
-}
-
-.brand-title {
-  font-family: 'Orbitron', sans-serif;
-  font-size: 56px;
-  font-weight: 700;
-  background: linear-gradient(135deg, var(--accent-primary), var(--accent-hover));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin: 0 0 16px 0;
-  letter-spacing: 2px;
-}
-
-.brand-subtitle {
-  font-size: 18px;
-  color: var(--text-secondary);
-  margin: 0 0 48px 0;
-  letter-spacing: 1px;
-}
-
-.feature-list {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  margin-bottom: 48px;
-}
-
-.feature-item {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 16px 20px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid var(--glass-border);
-  border-radius: 12px;
-  transition: all 0.3s;
-}
-
-.feature-item:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: var(--accent-primary);
-  transform: translateX(8px);
-}
-
-.feature-item i {
-  font-size: 24px;
-  color: var(--accent-primary);
-}
-
-.feature-item span {
-  font-size: 16px;
-  color: var(--text-primary);
-  font-weight: 500;
-}
-
-.cyber-decoration {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 48px;
-}
-
-.cyber-line {
-  height: 2px;
-  background: linear-gradient(90deg, var(--accent-primary), transparent);
-  border-radius: 2px;
-  animation: scan 3s ease-in-out infinite;
-}
-
-.cyber-line:nth-child(2) {
-  width: 70%;
-  animation-delay: 0.5s;
-}
-
-.cyber-line:nth-child(3) {
-  width: 40%;
-  animation-delay: 1s;
-}
-
-@keyframes scan {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 1; }
-}
-
-/* 右侧登录区 */
-.login-right {
-  flex: 0 0 550px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 40px;
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(20px);
-}
-
-.login-card {
+  left: -20%;
   width: 100%;
-  max-width: 460px;
-  padding: 48px 40px;
-  border-radius: 24px;
-  animation: slideIn 0.6s ease-out;
+  height: 100%;
+  z-index: 0;
 }
 
-@keyframes slideIn {
+.spline-canvas {
+  width: 100%;
+  height: 100%;
+}
+
+/* 加载动画 */
+.spline-loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+.loading-spinner {
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+
+.spinner-ring {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border: 3px solid transparent;
+  border-top-color: var(--accent-primary);
+  border-radius: 50%;
+  animation: spin 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+}
+
+.spinner-ring:nth-child(2) {
+  width: 60px;
+  height: 60px;
+  top: 10px;
+  left: 10px;
+  border-top-color: var(--accent-hover);
+  animation-delay: 0.3s;
+}
+
+.spinner-ring:nth-child(3) {
+  width: 40px;
+  height: 40px;
+  top: 20px;
+  left: 20px;
+  border-top-color: #fff;
+  animation-delay: 0.6s;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+  color: var(--accent-primary);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  animation: fadeInOut 2s ease-in-out infinite;
+}
+
+@keyframes fadeInOut {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+/* 品牌标识 */
+.brand-logo {
+  position: absolute;
+  top: 48px;
+  left: 64px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  z-index: 20;
+  animation: logoFadeIn 1s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.brand-logo:hover {
+  transform: translateX(4px);
+}
+
+@keyframes logoFadeIn {
   from {
     opacity: 0;
-    transform: translateX(30px);
+    transform: translateX(-20px) translateY(-10px);
   }
   to {
     opacity: 1;
-    transform: translateX(0);
+    transform: translateX(0) translateY(0);
   }
 }
 
+.logo-icon {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.logo-icon::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-hover), var(--accent-primary));
+  border-radius: 12px;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  z-index: -1;
+}
+
+.logo-icon:hover::before {
+  opacity: 0.15;
+}
+
+.logo-icon::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.1), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.logo-icon:hover::after {
+  opacity: 1;
+}
+
+.logo-icon:hover {
+  border-color: rgba(168, 199, 250, 0.3);
+  box-shadow: 
+    0 8px 24px rgba(168, 199, 250, 0.15),
+    0 0 0 1px rgba(168, 199, 250, 0.1);
+  transform: translateY(-1px);
+}
+
+.logo-inner {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  color: rgba(255, 255, 255, 0.9);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.logo-icon:hover .logo-inner {
+  color: var(--accent-primary);
+  transform: scale(1.05);
+}
+
+.logo-inner svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 2px 8px rgba(168, 199, 250, 0.3));
+}
+
+.logo-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  transition: transform 0.3s ease;
+}
+
+.logo-title {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: #ffffff;
+  letter-spacing: -0.3px;
+  line-height: 1;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+  transition: color 0.3s ease;
+}
+
+.brand-logo:hover .logo-title {
+  color: var(--accent-primary);
+}
+
+.logo-subtitle {
+  font-size: 10px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.45);
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  line-height: 1;
+  transition: color 0.3s ease;
+}
+
+.brand-logo:hover .logo-subtitle {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* 表单容器 */
+.form-wrapper {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 420px;
+  margin-left: 52%;
+  padding: 20px;
+  animation: fadeInUp 0.8s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 登录卡片 */
+.login-card {
+  position: relative;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: none;
+  border-radius: 24px;
+  padding: 40px 32px;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+}
+
+/* 卡片头部 */
 .card-header {
-  margin-bottom: 36px;
+  margin-bottom: 28px;
 }
 
-.card-header h2 {
-  font-size: 32px;
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--accent-primary);
+  border-radius: 50%;
+  animation: statusPulse 2s ease-in-out infinite;
+  box-shadow: 0 0 8px var(--accent-primary);
+}
+
+@keyframes statusPulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.3);
+  }
+}
+
+
+.card-title {
+  font-size: 28px;
   font-weight: 700;
-  color: var(--text-primary);
-  margin: 0 0 8px 0;
-}
-
-.card-header p {
-  font-size: 15px;
-  color: var(--text-secondary);
+  color: #fff;
   margin: 0;
+  letter-spacing: -0.5px;
 }
 
 /* 表单样式 */
 .login-form {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .form-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
-  color: var(--text-primary);
-}
-
-.form-label i {
-  font-size: 16px;
-  color: var(--accent-primary);
+  color: rgba(255, 255, 255, 0.8);
+  letter-spacing: 0.3px;
 }
 
 .input-wrapper {
@@ -436,62 +531,67 @@ const quickLogin = async (type: 'admin' | 'user') => {
 .form-input {
   width: 100%;
   padding: 14px 16px;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid var(--glass-border);
-  border-radius: 10px;
-  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: #fff;
   font-size: 15px;
-  transition: all 0.2s;
+  transition: all 0.3s;
   outline: none;
+}
+
+.form-input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
 }
 
 .form-input:hover {
   border-color: rgba(168, 199, 250, 0.3);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .form-input:focus {
-  background: rgba(0, 0, 0, 0.4);
   border-color: var(--accent-primary);
-}
-
-.form-input::placeholder {
-  color: var(--text-muted);
-}
-
-.input-border {
-  display: none;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 3px rgba(168, 199, 250, 0.1);
 }
 
 .password-toggle {
   position: absolute;
-  right: 12px;
+  right: 14px;
   top: 50%;
   transform: translateY(-50%);
   background: none;
   border: none;
-  color: var(--text-muted);
+  color: rgba(255, 255, 255, 0.4);
   cursor: pointer;
-  padding: 8px;
-  transition: color 0.2s;
+  padding: 6px;
+  transition: all 0.2s;
+  border-radius: 6px;
 }
 
 .password-toggle:hover {
   color: var(--accent-primary);
+  background: rgba(168, 199, 250, 0.1);
 }
 
 .error-text {
-  font-size: 12px;
-  color: #ef4444;
-  margin-top: 4px;
-}
-
-.form-options {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #ff6b6b;
+  animation: shake 0.3s ease;
 }
 
-.checkbox-wrapper {
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+.checkbox-label {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -499,339 +599,36 @@ const quickLogin = async (type: 'admin' | 'user') => {
   user-select: none;
 }
 
-.checkbox-wrapper input[type="checkbox"] {
-  display: none;
-}
-
-.checkbox-custom {
-  width: 20px;
-  height: 20px;
-  border: 2px solid var(--glass-border);
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.05);
-  position: relative;
-  transition: all 0.3s;
-}
-
-.checkbox-wrapper:hover .checkbox-custom {
-  border-color: var(--accent-primary);
-}
-
-.checkbox-wrapper input:checked ~ .checkbox-custom {
-  background: var(--accent-primary);
-  border-color: var(--accent-primary);
-}
-
-.checkbox-wrapper input:checked ~ .checkbox-custom::after {
-  content: '\f00c';
-  font-family: 'Font Awesome 6 Free';
-  font-weight: 900;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  color: #0a0a0a;
-  font-size: 12px;
-}
-
-.checkbox-label {
-  font-size: 14px;
-  color: var(--text-secondary);
-  font-weight: 500;
-}
-
-.text-link {
-  font-size: 14px;
-  color: var(--accent-primary);
-  text-decoration: none;
-  font-weight: 500;
-  position: relative;
-  transition: color 0.2s;
-}
-
-.text-link::after {
-  content: '';
-  position: absolute;
-  bottom: -2px;
-  left: 0;
-  width: 0;
-  height: 2px;
-  background: var(--accent-primary);
-  transition: width 0.3s;
-}
-
-.text-link:hover {
-  color: var(--accent-hover);
-}
-
-.text-link:hover::after {
-  width: 100%;
-}
-
-.submit-button {
-  width: 100%;
-  padding: 16px;
-  background: linear-gradient(135deg, var(--accent-primary), var(--accent-hover));
-  border: none;
-  border-radius: 12px;
-  color: #0a0a0a;
-  font-size: 16px;
-  font-weight: 700;
+.checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
   cursor: pointer;
-  transition: all 0.3s;
-  margin-top: 8px;
-  position: relative;
-  overflow: hidden;
 }
 
-.submit-button::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-  transition: left 0.5s;
-}
-
-.submit-button:hover:not(:disabled)::before {
-  left: 100%;
-}
-
-.submit-button:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(168, 199, 250, 0.4);
-}
-
-.submit-button:active:not(:disabled) {
-  transform: translateY(0);
-}
-
-.submit-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.button-content,
-.button-loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-}
-
-.quick-login {
-  margin-top: 32px;
-}
-
-.divider {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 20px;
-}
-
-.divider::before,
-.divider::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--glass-border);
-}
-
-.divider span {
-  font-size: 13px;
-  color: var(--text-muted);
-  white-space: nowrap;
-}
-
-.quick-buttons {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.quick-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid var(--glass-border);
-  border-radius: 10px;
-  color: var(--text-secondary);
+.checkbox-text {
   font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s;
+  color: rgba(255, 255, 255, 0.7);
 }
 
-.quick-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: var(--accent-primary);
-  color: var(--text-primary);
-}
-
-.quick-btn i {
-  font-size: 16px;
-}
-
-/* 响应式 */
-@media (max-width: 1024px) {
-  .login-left {
-    display: none;
-  }
-  
-  .login-right {
-    flex: 1;
-  }
-}
-
-@media (max-width: 640px) {
-  .login-right {
-    padding: 20px;
-  }
-  
-  .login-card {
-    padding: 32px 24px;
-  }
-  
-  .brand-title {
-    font-size: 40px;
-  }
-}
-</style>
-
-<style scoped>
-.auth-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  padding: 20px;
-  background: var(--bg-color);
-  position: relative;
-  overflow: hidden;
-}
-
-.auth-container::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle at 30% 50%, rgba(168, 199, 250, 0.08), transparent 50%),
-              radial-gradient(circle at 70% 50%, rgba(99, 102, 241, 0.06), transparent 50%);
-  animation: bgFloat 20s ease-in-out infinite;
-  pointer-events: none;
-}
-
-@keyframes bgFloat {
-  0%, 100% { transform: translate(0, 0) rotate(0deg); }
-  50% { transform: translate(-30px, -30px) rotate(5deg); }
-}
-
-.auth-card {
-  width: 460px;
-  max-width: 100%;
-  padding: 48px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-  border-radius: 24px;
-  position: relative;
-  z-index: 1;
-  animation: cardFloat 0.6s ease-out;
-}
-
-@keyframes cardFloat {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.logo-area {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  font-family: 'Orbitron', sans-serif;
-  font-size: 26px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  color: var(--text-primary);
-  margin-bottom: 36px;
-  position: relative;
-}
-
-.logo-icon {
-  color: var(--accent-primary);
-  font-size: 32px;
-  animation: iconPulse 2s ease-in-out infinite;
-}
-
-@keyframes iconPulse {
-  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 8px rgba(168, 199, 250, 0.3)); }
-  50% { transform: scale(1.05); filter: drop-shadow(0 0 16px rgba(168, 199, 250, 0.5)); }
-}
-
-.logo-text {
-  background: linear-gradient(135deg, var(--accent-primary), var(--accent-hover));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  text-shadow: 0 0 30px rgba(168, 199, 250, 0.3);
-}
-
-.auth-header {
-  text-align: center;
-  margin-bottom: 32px;
-}
-
-.auth-header h2 {
-  margin: 0 0 10px 0;
-  font-size: 32px;
-  font-weight: 700;
-  color: var(--text-primary);
-  letter-spacing: -0.5px;
-}
-
-.auth-header p {
-  margin: 0;
-  font-size: 15px;
-  color: var(--text-secondary);
-  font-weight: 400;
-}
-
-.auth-options {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin: -4px 0 24px;
-}
-
+/* 提交按钮 */
 .submit-btn {
   width: 100%;
-  margin-top: 12px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  height: 48px;
-  font-size: 15px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, var(--accent-primary), var(--accent-hover));
+  padding: 16px;
+  margin-top: 8px;
   border: none;
-  transition: all 0.3s var(--ease-out);
+  border-radius: 12px;
+  background: linear-gradient(120deg, var(--holo-primary), var(--holo-secondary));
+  color: #0a0a0a;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 16px rgba(128, 91, 255, 0.35);
 }
 
 .submit-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(168, 199, 250, 0.4);
+  box-shadow: 0 6px 20px rgba(168, 199, 250, 0.4);
 }
 
 .submit-btn:active:not(:disabled) {
@@ -843,113 +640,292 @@ const quickLogin = async (type: 'admin' | 'user') => {
   cursor: not-allowed;
 }
 
-.link {
-  color: var(--accent-primary);
-  font-size: 13px;
-  text-decoration: none;
-  transition: all 0.2s;
-  font-weight: 500;
-  position: relative;
+.loading-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
 }
 
-.link::after {
-  content: '';
-  position: absolute;
-  bottom: -2px;
-  left: 0;
-  width: 0;
-  height: 1px;
-  background: var(--accent-primary);
-  transition: width 0.3s var(--ease-out);
+.spinner-small {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #0a0a0a;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* 底部 */
+.card-footer {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  text-align: center;
+  font-size: 14px;
+}
+
+.footer-text {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.link {
+  color: var(--accent-primary);
+  text-decoration: none;
+  font-weight: 600;
+  margin-left: 6px;
+  transition: all 0.2s;
 }
 
 .link:hover {
   color: var(--accent-hover);
 }
 
-.link:hover::after {
+/* 装饰元素 */
+.deco-elements {
+  position: absolute;
   width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 5;
+  overflow: hidden;
 }
 
-:deep(.el-form-item) {
-  margin-bottom: 24px;
+/* 浮动粒子 */
+.particle {
+  position: absolute;
+  width: var(--size, 6px);
+  height: var(--size, 6px);
+  border-radius: 999px;
+  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.95), rgba(108, 253, 228, 0.25) 60%, transparent 85%);
+  box-shadow:
+    0 0 12px rgba(108, 253, 228, 0.6),
+    0 0 32px rgba(128, 91, 255, 0.4);
+  opacity: 0;
+  animation: particleFloat var(--duration, 5s) cubic-bezier(0.42, 0, 0.58, 1) infinite;
+  animation-delay: var(--delay, 0s);
+  mix-blend-mode: screen;
+  filter: drop-shadow(0 0 6px rgba(128, 91, 255, 0.45));
 }
 
-:deep(.el-form-item__label) {
-  color: var(--text-primary);
-  font-weight: 600;
-  font-size: 14px;
-  margin-bottom: 8px;
+.particle::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 170%;
+  height: 230%;
+  transform: translate(-50%, -10%);
+  background: radial-gradient(circle, rgba(108, 253, 228, 0.35), transparent 70%);
+  filter: blur(14px);
+  opacity: 0.8;
 }
 
-:deep(.el-form-item__error) {
-  color: #ef4444;
-  font-size: 12px;
-  margin-top: 6px;
+.particle-1 {
+  left: 46%;
+  top: 28%;
+  --size: 8px;
+  --drift-x: 32px;
+  --drift-y: -60px;
+  --duration: 5.6s;
+  --delay: 2.6s;
+  --scale-start: 0.7;
+  --scale-end: 1.3;
 }
 
-:deep(.el-input__wrapper) {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1.5px solid var(--glass-border);
-  box-shadow: none;
-  transition: all 0.3s var(--ease-out);
-  border-radius: 12px;
-  padding: 12px 16px;
+.particle-2 {
+  left: 53%;
+  top: 40%;
+  --size: 6px;
+  --drift-x: 18px;
+  --drift-y: -45px;
+  --duration: 4.8s;
+  --delay: 3.7s;
+  --scale-start: 0.65;
+  --scale-end: 1.1;
 }
 
-:deep(.el-input__wrapper:hover) {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(168, 199, 250, 0.4);
+.particle-3 {
+  left: 50%;
+  top: 56%;
+  --size: 7px;
+  --drift-x: -16px;
+  --drift-y: -38px;
+  --duration: 5.4s;
+  --delay: 3.2s;
+  --scale-start: 0.8;
+  --scale-end: 1.2;
 }
 
-:deep(.el-input__wrapper.is-focus) {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: var(--accent-primary);
-  box-shadow: 0 0 0 3px rgba(168, 199, 250, 0.15);
+.particle-4 {
+  left: 56%;
+  top: 72%;
+  --size: 5px;
+  --drift-x: -20px;
+  --drift-y: -34px;
+  --duration: 4.6s;
+  --delay: 4.4s;
+  --scale-start: 0.6;
+  --scale-end: 1.1;
 }
 
-:deep(.el-input__inner) {
-  color: var(--text-primary);
-  font-size: 15px;
+.particle-5 {
+  left: 59%;
+  top: 24%;
+  --size: 10px;
+  --drift-x: -28px;
+  --drift-y: -55px;
+  --duration: 6.2s;
+  --delay: 3.0s;
+  --scale-start: 0.75;
+  --scale-end: 1.35;
 }
 
-:deep(.el-input__inner::placeholder) {
-  color: var(--text-muted);
+.particle-6 {
+  left: 48%;
+  top: 82%;
+  --size: 6px;
+  --drift-x: 24px;
+  --drift-y: -42px;
+  --duration: 6s;
+  --delay: 4.7s;
+  --scale-start: 0.7;
+  --scale-end: 1.15;
 }
 
-:deep(.el-input__suffix) {
-  color: var(--text-muted);
+@keyframes particleFloat {
+  0% {
+    transform: translate3d(0, 0, 0) scale(var(--scale-start, 0.85));
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.5;
+  }
+  50% {
+    transform: translate3d(var(--drift-x, 20px), var(--drift-y, -40px), 0) scale(var(--scale-end, 1.2));
+    opacity: 1;
+  }
+  80% {
+    opacity: 0.4;
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(var(--scale-start, 0.85));
+    opacity: 0;
+  }
 }
 
-:deep(.el-checkbox) {
-  height: auto;
+/* 光晕效果 */
+.glow-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.15;
+  animation: glowPulse 4s ease-in-out infinite;
 }
 
-:deep(.el-checkbox__label) {
-  color: var(--text-secondary);
-  font-size: 13px;
-  font-weight: 500;
+.glow-1 {
+  width: 300px;
+  height: 300px;
+  background: var(--holo-primary);
+  left: 40%;
+  top: 20%;
+  animation-delay: 0s;
 }
 
-:deep(.el-checkbox__inner) {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1.5px solid var(--glass-border);
-  border-radius: 4px;
-  width: 16px;
-  height: 16px;
-  transition: all 0.2s;
+.glow-2 {
+  width: 250px;
+  height: 250px;
+  background: var(--holo-secondary);
+  left: 50%;
+  top: 60%;
+  animation-delay: 2s;
 }
 
-:deep(.el-checkbox__inner:hover) {
-  border-color: var(--accent-primary);
+
+@keyframes glowPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.2;
+  }
 }
 
-:deep(.el-checkbox__input.is-checked .el-checkbox__inner) {
-  background: var(--accent-primary);
-  border-color: var(--accent-primary);
+/* 响应式设计 */
+@media (max-width: 1200px) {
+  .spline-background {
+    width: 50%;
+  }
+  
+  .form-wrapper {
+    margin-left: 52%;
+  }
+  
 }
 
-:deep(.el-checkbox__input.is-checked + .el-checkbox__label) {
-  color: var(--text-primary);
+@media (max-width: 768px) {
+  .spline-background {
+    width: 100%;
+    opacity: 0.3;
+  }
+  
+  .form-wrapper {
+    margin-left: auto;
+    margin-right: auto;
+    padding: 16px;
+  }
+  
+  .deco-elements {
+    display: none;
+  }
+  
+  .brand-logo {
+    top: 20px;
+    left: 20px;
+  }
+  
+  .logo-icon {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .logo-icon i {
+    font-size: 20px;
+  }
+  
+  .logo-title {
+    font-size: 16px;
+  }
+  
+  .logo-subtitle {
+    font-size: 9px;
+  }
+  
+  .form-wrapper {
+    max-width: 100%;
+  }
+  
+  .login-card {
+    padding: 28px 24px;
+  }
+
+}
+
+@media (max-width: 480px) {
+  .brand-logo {
+    gap: 10px;
+  }
+  
+  .login-card {
+    padding: 24px 20px;
+  }
+  
+  .card-title {
+    font-size: 24px;
+  }
 }
 </style>
