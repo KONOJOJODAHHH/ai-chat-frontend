@@ -42,6 +42,40 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+:root.light {
+  --bg-color: #f3f6fb;
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-border: rgba(15, 23, 42, 0.08);
+  --accent-primary: #315efb;
+  --accent-hover: #5b7cff;
+  --accent-subtle: rgba(49, 94, 251, 0.08);
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+  --text-muted: #6b7280;
+  --user-msg-bg: rgba(49, 94, 251, 0.08);
+  --ai-msg-bg: rgba(255, 255, 255, 0.65);
+  --button-primary-bg: rgba(255, 255, 255, 0.7);
+  --button-primary-hover: rgba(255, 255, 255, 0.95);
+  --button-primary-text: #111827;
+}
+
+:root.dark {
+  --bg-color: #0a0a0a;
+  --glass-bg: rgba(23, 23, 23, 0.6);
+  --glass-border: rgba(255, 255, 255, 0.06);
+  --accent-primary: #A8C7FA;
+  --accent-hover: #C5D9FC;
+  --accent-subtle: rgba(168, 199, 250, 0.1);
+  --text-primary: #ececec;
+  --text-secondary: #9ca3af;
+  --text-muted: #6b7280;
+  --user-msg-bg: rgba(255, 255, 255, 0.08);
+  --ai-msg-bg: transparent;
+  --button-primary-bg: rgba(255, 255, 255, 0.08);
+  --button-primary-hover: rgba(255, 255, 255, 0.12);
+  --button-primary-text: #ececec;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -56,6 +90,7 @@ body {
   color: var(--text-primary);
   overflow: hidden;
   position: relative;
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 /* 动态极光背景 */
@@ -148,4 +183,3 @@ body {
     background: var(--accent-primary);
   }
 }
-

@@ -4,29 +4,36 @@
       <div class="header-content">
         <div class="header-title">
           <i class="fa-solid fa-wand-magic-sparkles"></i>
-          <h1>Prompt管理</h1>
+          <div>
+            <h1>Prompt 管理</h1>
+            <p>维护系统预置提示词</p>
+          </div>
         </div>
+
         <button class="primary-btn" @click="openCreate">
           <i class="fa-solid fa-plus"></i>
-          <span>新增Prompt</span>
+          <span>新增 Prompt</span>
         </button>
       </div>
     </div>
 
-    <div class="prompts-grid">
+    <div v-if="items.length" class="prompts-grid">
       <div v-for="row in items" :key="row.id" class="prompt-card glass-card">
         <div class="prompt-header">
           <div class="prompt-icon">
             <i class="fa-solid fa-sparkles"></i>
           </div>
-          <h3>{{ row.title }}</h3>
+          <div>
+            <h3>{{ row.title }}</h3>
+            <p>ID：{{ row.id }}</p>
+          </div>
         </div>
-        <div class="prompt-content">
-          {{ row.content }}
-        </div>
+
+        <div class="prompt-content">{{ row.content }}</div>
+
         <div class="prompt-actions">
           <button class="action-btn" @click="openEdit(row)">
-            <i class="fa-solid fa-edit"></i>
+            <i class="fa-solid fa-pen"></i>
             <span>编辑</span>
           </button>
           <button class="action-btn danger" @click="remove(row)">
@@ -37,39 +44,27 @@
       </div>
     </div>
 
-    <div v-if="items.length === 0" class="empty-state">
+    <div v-else class="empty-state glass-card">
       <i class="fa-solid fa-wand-magic-sparkles"></i>
-      <p>暂无Prompt模板</p>
-      <button class="primary-btn" @click="openCreate">
-        <i class="fa-solid fa-plus"></i>
-        <span>创建第一个Prompt</span>
-      </button>
+      <p>暂无 Prompt 模板</p>
     </div>
 
-    <el-dialog v-model="visible" :title="editingId ? '编辑Prompt' : '新增Prompt'" width="700px" class="admin-dialog">
+    <el-dialog v-model="visible" :title="editingId ? '编辑 Prompt' : '新增 Prompt'" width="720px">
       <div class="dialog-form">
         <div class="form-group">
-          <label class="form-label">
-            <i class="fa-solid fa-heading"></i>
-            <span>标题</span>
-          </label>
-          <input v-model="form.title" class="form-input" placeholder="输入Prompt标题" />
+          <label class="form-label">标题</label>
+          <input v-model="form.title" class="form-input" placeholder="请输入标题" />
         </div>
         <div class="form-group">
-          <label class="form-label">
-            <i class="fa-solid fa-align-left"></i>
-            <span>内容</span>
-          </label>
-          <textarea v-model="form.content" class="form-textarea" rows="8" placeholder="输入Prompt内容"></textarea>
+          <label class="form-label">内容</label>
+          <textarea v-model="form.content" rows="8" class="form-textarea" placeholder="请输入 Prompt 内容"></textarea>
         </div>
       </div>
+
       <template #footer>
         <div class="dialog-footer">
-          <button class="secondary-btn" @click="visible=false">取消</button>
-          <button class="primary-btn" @click="save">
-            <i class="fa-solid fa-check"></i>
-            <span>保存</span>
-          </button>
+          <button class="secondary-btn" @click="visible = false">取消</button>
+          <button class="primary-btn" @click="save">保存</button>
         </div>
       </template>
     </el-dialog>
@@ -77,58 +72,63 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { adminAPI } from '@/utils/api'
+import { onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
+import { adminAPI, type AdminPromptItem } from '@/utils/api'
 
-const items = ref<any[]>([])
+const items = ref<AdminPromptItem[]>([])
 const visible = ref(false)
 const editingId = ref<string | null>(null)
-const form = ref<any>({ title: '', content: '' })
+const form = ref({ title: '', content: '' })
 
-const load = async () => { 
+const load = async () => {
   try {
     items.value = await adminAPI.listPrompts()
-  } catch (e) {
-    ElMessage.error('加载失败')
+  } catch (loadError: any) {
+    ElMessage.error(loadError?.message || 'Prompt 列表加载失败')
   }
 }
 
-const openCreate = () => { 
+const openCreate = () => {
   editingId.value = null
   form.value = { title: '', content: '' }
-  visible.value = true 
+  visible.value = true
 }
 
-const openEdit = (row: any) => { 
+const openEdit = (row: AdminPromptItem) => {
   editingId.value = row.id
   form.value = { title: row.title, content: row.content }
-  visible.value = true 
+  visible.value = true
 }
 
-const save = async () => { 
+const save = async () => {
+  if (!form.value.title || !form.value.content) {
+    ElMessage.warning('请先填写标题和内容')
+    return
+  }
+
   try {
     if (editingId.value) {
       await adminAPI.updatePrompt(editingId.value, form.value)
-      ElMessage.success('更新成功')
+      ElMessage.success('Prompt 已更新')
     } else {
       await adminAPI.createPrompt(form.value)
-      ElMessage.success('创建成功')
+      ElMessage.success('Prompt 已创建')
     }
     visible.value = false
     await load()
-  } catch (e) {
-    ElMessage.error('保存失败')
+  } catch (saveError: any) {
+    ElMessage.error(saveError?.message || '保存失败')
   }
 }
 
-const remove = async (row: any) => { 
+const remove = async (row: AdminPromptItem) => {
   try {
     await adminAPI.deletePrompt(row.id)
-    ElMessage.success('删除成功')
+    ElMessage.success('Prompt 已删除')
     await load()
-  } catch (e) {
-    ElMessage.error('删除失败')
+  } catch (actionError: any) {
+    ElMessage.error(actionError?.message || '删除失败')
   }
 }
 
@@ -141,23 +141,30 @@ onMounted(load)
   margin: 0 auto;
 }
 
-.page-header {
-  padding: 24px;
-  margin-bottom: 24px;
+.page-header,
+.prompt-card,
+.empty-state {
   border-radius: 16px;
 }
 
-.header-content {
+.page-header {
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.header-content,
+.prompt-actions,
+.dialog-footer {
   display: flex;
   justify-content: space-between;
+  gap: 12px;
   align-items: center;
-  gap: 20px;
 }
 
 .header-title {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
 
 .header-title i {
@@ -166,71 +173,55 @@ onMounted(load)
 }
 
 .header-title h1 {
-  font-size: 24px;
-  font-weight: 600;
-  color: var(--text-primary);
   margin: 0;
+  color: var(--text-primary);
+}
+
+.header-title p {
+  margin: 6px 0 0;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.primary-btn,
+.secondary-btn,
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  cursor: pointer;
 }
 
 .primary-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
   background: var(--accent-primary);
   color: #0a0a0a;
   border: none;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
 }
 
-.primary-btn:hover {
-  background: var(--accent-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(168, 199, 250, 0.3);
-}
-
-.secondary-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
+.secondary-btn,
+.action-btn {
   background: rgba(255, 255, 255, 0.05);
-  color: var(--text-primary);
+  color: var(--text-secondary);
   border: 1px solid var(--glass-border);
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
 }
 
-.secondary-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: var(--accent-primary);
+.action-btn.danger {
+  color: #f87171;
+  border-color: rgba(248, 113, 113, 0.2);
 }
 
 .prompts-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
   gap: 20px;
-  margin-bottom: 24px;
 }
 
 .prompt-card {
   padding: 20px;
-  border-radius: 16px;
-  transition: all 0.3s var(--ease-out);
   display: flex;
   flex-direction: column;
-}
-
-.prompt-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 }
 
 .prompt-header {
@@ -243,167 +234,89 @@ onMounted(load)
 }
 
 .prompt-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, var(--accent-primary), var(--accent-hover));
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
   color: #0a0a0a;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-hover));
 }
 
-.prompt-header h3 {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text-primary);
+.prompt-header h3,
+.prompt-header p {
   margin: 0;
+}
+
+.prompt-header p {
+  margin-top: 4px;
+  color: var(--text-muted);
+  font-size: 12px;
 }
 
 .prompt-content {
   flex: 1;
-  font-size: 14px;
   color: var(--text-secondary);
+  white-space: pre-wrap;
+  word-break: break-word;
   line-height: 1.6;
   margin-bottom: 16px;
-  display: -webkit-box;
-  -webkit-line-clamp: 4;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
 }
 
 .prompt-actions {
-  display: flex;
-  gap: 8px;
+  justify-content: flex-end;
   padding-top: 16px;
   border-top: 1px solid var(--glass-border);
 }
 
-.action-btn {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 8px 12px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--glass-border);
-  border-radius: 8px;
-  color: var(--text-secondary);
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.action-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--text-primary);
-  border-color: var(--accent-primary);
-}
-
-.action-btn.danger:hover {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-  border-color: #ef4444;
-}
-
 .empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 80px 20px;
+  padding: 60px 20px;
+  text-align: center;
   color: var(--text-muted);
 }
 
 .empty-state i {
-  font-size: 64px;
-  margin-bottom: 20px;
-  opacity: 0.3;
-}
-
-.empty-state p {
-  font-size: 16px;
-  margin: 0 0 24px 0;
+  font-size: 48px;
+  margin-bottom: 12px;
 }
 
 .dialog-form {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+  display: grid;
+  gap: 16px;
 }
 
 .form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  display: grid;
+  gap: 8px;
 }
 
 .form-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  font-weight: 600;
   color: var(--text-primary);
-}
-
-.form-label i {
-  font-size: 16px;
-  color: var(--accent-primary);
+  font-weight: 600;
 }
 
 .form-input,
 .form-textarea {
-  padding: 12px 16px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--glass-border);
+  width: 100%;
+  padding: 12px 14px;
   border-radius: 10px;
+  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.05);
   color: var(--text-primary);
-  font-size: 14px;
-  transition: all 0.2s;
-  font-family: inherit;
-}
-
-.form-input:focus,
-.form-textarea:focus {
-  outline: none;
-  background: rgba(255, 255, 255, 0.08);
-  border-color: var(--accent-primary);
-  box-shadow: 0 0 0 3px rgba(168, 199, 250, 0.1);
 }
 
 .form-textarea {
   resize: vertical;
-  min-height: 120px;
-}
-
-.dialog-footer {
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
 }
 
 :deep(.el-dialog) {
   background: var(--glass-bg);
-  backdrop-filter: blur(20px);
   border: 1px solid var(--glass-border);
   border-radius: 16px;
 }
 
-:deep(.el-dialog__header) {
-  border-bottom: 1px solid var(--glass-border);
-  padding: 20px 24px;
-}
-
 :deep(.el-dialog__title) {
   color: var(--text-primary);
-  font-size: 18px;
-  font-weight: 600;
-}
-
-:deep(.el-dialog__body) {
-  padding: 24px;
 }
 </style>

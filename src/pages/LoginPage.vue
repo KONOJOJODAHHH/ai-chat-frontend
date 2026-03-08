@@ -190,7 +190,7 @@ const onSubmit = async () => {
         duration: 2000,
       })
       
-      const targetRoute = res.user.role === 'admin' ? '/admin' : '/'
+      const targetRoute = '/'
       setTimeout(() => router.replace(targetRoute), 500)
     }
   } catch (e) {

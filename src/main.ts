@@ -6,6 +6,7 @@ import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import { useAuthStore } from './composables/useAuthStore'
+import { authAPI } from './utils/api'
 
 // 创建Vue应用实例
 const app = createApp(App)
@@ -20,7 +21,6 @@ app.use(router)
 app.use(ElementPlus)
 
 const auth = useAuthStore()
-import { authAPI } from './utils/api'
 
 // 初始化认证状态后再挂载应用
 auth.init(async () => await authAPI.profile()).then(() => {

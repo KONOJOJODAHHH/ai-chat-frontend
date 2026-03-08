@@ -4,12 +4,16 @@
       <div class="header-content">
         <div class="header-title">
           <i class="fa-solid fa-microchip"></i>
-          <h1>模型管理</h1>
+          <div>
+            <h1>模型管理</h1>
+            <p>管理后端实际可用的大模型配置</p>
+          </div>
         </div>
+
         <div class="header-actions">
           <div class="search-box">
             <i class="fa-solid fa-search"></i>
-            <input v-model="q" placeholder="搜索模型" @input="load" />
+            <input v-model.trim="q" placeholder="搜索模型名称或 modelId" @input="handleSearch" />
           </div>
           <button class="primary-btn" @click="openCreate">
             <i class="fa-solid fa-plus"></i>
@@ -19,42 +23,47 @@
       </div>
     </div>
 
-    <div class="models-grid">
+    <div v-if="items.length" class="models-grid">
       <div v-for="row in items" :key="row.id" class="model-card glass-card">
         <div class="model-header">
-          <div class="model-info">
+          <div>
             <h3>{{ row.name }}</h3>
-            <span class="model-type">{{ row.provider }}</span>
-          </div>
-          <div class="model-status">
-            <span class="status-badge" :class="{ active: row.enabled }">
-              <i class="fa-solid fa-circle"></i>
-              {{ row.enabled ? '启用' : '禁用' }}
-            </span>
+            <div class="model-tags">
+              <span class="tag">{{ row.modelId }}</span>
+              <span class="tag tag-provider">{{ row.provider || '未设置提供商' }}</span>
+              <span class="tag" :class="row.enabled ? 'tag-success' : 'tag-muted'">
+                {{ row.enabled ? '已启用' : '已禁用' }}
+              </span>
+              <span v-if="row.isDefault" class="tag tag-default">默认模型</span>
+            </div>
           </div>
         </div>
 
         <div class="model-body">
           <div class="model-field">
-            <label>API地址</label>
-            <div class="field-value">{{ row.baseUrl }}</div>
+            <label>接口地址</label>
+            <div class="field-value">{{ row.baseUrl || '--' }}</div>
           </div>
-          <div class="model-field" v-if="row.remark">
+          <div class="model-field">
+            <label>温度参数</label>
+            <div class="field-value">{{ row.temperature ?? '--' }}</div>
+          </div>
+          <div class="model-field">
             <label>备注</label>
-            <div class="field-value">{{ row.remark }}</div>
+            <div class="field-value">{{ row.remark || '--' }}</div>
           </div>
         </div>
 
         <div class="model-actions">
           <button class="action-btn" @click="openEdit(row)">
-            <i class="fa-solid fa-edit"></i>
+            <i class="fa-solid fa-pen"></i>
             <span>编辑</span>
           </button>
           <button class="action-btn" @click="toggle(row)">
             <i :class="row.enabled ? 'fa-solid fa-toggle-on' : 'fa-solid fa-toggle-off'"></i>
             <span>{{ row.enabled ? '禁用' : '启用' }}</span>
           </button>
-          <button class="action-btn" @click="setDefault(row)" :class="{ primary: row.isDefault }">
+          <button class="action-btn" :class="{ primary: row.isDefault }" @click="setDefault(row)">
             <i class="fa-solid fa-star"></i>
             <span>设为默认</span>
           </button>
@@ -70,55 +79,58 @@
       </div>
     </div>
 
+    <div v-else class="empty-state glass-card">
+      <i class="fa-solid fa-microchip"></i>
+      <p>{{ loading ? '加载中...' : '暂无模型数据' }}</p>
+    </div>
+
     <div class="pagination" v-if="total > size">
-      <el-pagination 
-        layout="prev, pager, next" 
-        :total="total" 
-        :page-size="size" 
-        :current-page="page" 
-        @current-change="p=>{page=p;load()}" 
+      <el-pagination
+        layout="prev, pager, next"
+        :total="total"
+        :page-size="size"
+        :current-page="page"
+        @current-change="handlePageChange"
       />
     </div>
 
-    <el-dialog v-model="visible" :title="editingId ? '编辑模型' : '新增模型'" width="600px" class="admin-dialog">
-      <el-form :model="form" label-width="120px" label-position="top">
-        <el-form-item label="模型名称">
-          <el-input v-model="form.name" placeholder="例如：DeepSeek-Chat" />
-        </el-form-item>
-        <el-form-item label="类型">
-          <el-input v-model="form.provider" placeholder="例如：deepseek" />
-        </el-form-item>
-        <el-form-item label="API基础地址">
-          <el-input v-model="form.baseUrl" placeholder="https://api.deepseek.com" />
-        </el-form-item>
-        <el-form-item label="API Key">
-          <el-input v-model="form.apiKey" type="password" show-password placeholder="输入API密钥" />
-        </el-form-item>
-        <div class="form-row">
-          <el-form-item label="请求方式" class="half">
-            <el-select v-model="form.method" style="width: 100%">
-              <el-option label="POST" value="POST" />
-              <el-option label="GET" value="GET" />
-            </el-select>
+    <el-dialog v-model="visible" :title="editingId ? '编辑模型' : '新增模型'" width="640px">
+      <el-form label-position="top">
+        <div class="form-grid">
+          <el-form-item label="模型名称">
+            <el-input v-model="form.name" placeholder="例如：Qwen 3.5 Flash" />
           </el-form-item>
-          <el-form-item label="Temperature" class="half">
-            <el-input-number v-model="form.temperature" :min="0" :max="1" :step="0.1" style="width: 100%" />
+          <el-form-item label="模型标识">
+            <el-input v-model="form.modelId" placeholder="例如：qwen3.5-flash" />
           </el-form-item>
         </div>
-        <el-form-item label="是否启用">
-          <el-switch v-model="form.enabled" />
+
+        <div class="form-grid">
+          <el-form-item label="提供商">
+            <el-input v-model="form.provider" placeholder="例如：Alibaba Cloud" />
+          </el-form-item>
+          <el-form-item label="温度参数">
+            <el-input-number v-model="form.temperature" :min="0" :max="2" :step="0.1" style="width: 100%" />
+          </el-form-item>
+        </div>
+
+        <el-form-item label="接口地址">
+          <el-input v-model="form.baseUrl" placeholder="https://dashscope.aliyuncs.com/compatible-mode/v1" />
         </el-form-item>
+
+        <el-form-item label="API Key">
+          <el-input v-model="form.apiKey" type="password" show-password placeholder="请输入 API Key" />
+        </el-form-item>
+
         <el-form-item label="备注">
-          <el-input v-model="form.remark" type="textarea" :rows="3" placeholder="模型描述或备注信息" />
+          <el-input v-model="form.remark" type="textarea" :rows="3" placeholder="可选备注" />
         </el-form-item>
       </el-form>
+
       <template #footer>
         <div class="dialog-footer">
-          <button class="secondary-btn" @click="visible=false">取消</button>
-          <button class="primary-btn" @click="save">
-            <i class="fa-solid fa-check"></i>
-            <span>保存</span>
-          </button>
+          <button class="secondary-btn" @click="visible = false">取消</button>
+          <button class="primary-btn" @click="save">保存</button>
         </div>
       </template>
     </el-dialog>
@@ -126,93 +138,150 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { adminAPI } from '@/utils/api'
+import { onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
+import { adminAPI, type AdminModelItem } from '@/utils/api'
+
+interface ModelForm {
+  modelId: string
+  name: string
+  provider: string
+  baseUrl: string
+  apiKey: string
+  temperature: number
+  remark: string
+}
+
+const createEmptyForm = (): ModelForm => ({
+  modelId: '',
+  name: '',
+  provider: '',
+  baseUrl: '',
+  apiKey: '',
+  temperature: 0.7,
+  remark: '',
+})
 
 const q = ref('')
-const items = ref<any[]>([])
+const items = ref<AdminModelItem[]>([])
 const total = ref(0)
 const page = ref(1)
 const size = ref(10)
+const loading = ref(false)
 const visible = ref(false)
 const editingId = ref<string | null>(null)
-const form = ref<any>({ name: '', provider: '', baseUrl: '', apiKey: '', method: 'POST', temperature: 0.7, enabled: true, remark: '' })
+const form = ref<ModelForm>(createEmptyForm())
+let searchTimer: ReturnType<typeof setTimeout> | null = null
 
-const load = async () => { 
+const load = async () => {
+  loading.value = true
   try {
-    const res: any = await adminAPI.listModels(q.value, page.value, size.value)
-    items.value = res.items
-    total.value = res.total
-  } catch (e) {
-    ElMessage.error('加载失败')
+    const result = await adminAPI.listModels(q.value, page.value, size.value)
+    items.value = result.items
+    total.value = result.total
+  } catch (loadError: any) {
+    ElMessage.error(loadError?.message || '模型列表加载失败')
+  } finally {
+    loading.value = false
   }
 }
 
-const openCreate = () => { 
+const handleSearch = () => {
+  page.value = 1
+  if (searchTimer) {
+    clearTimeout(searchTimer)
+  }
+  searchTimer = setTimeout(() => {
+    load()
+  }, 250)
+}
+
+const handlePageChange = (nextPage: number) => {
+  page.value = nextPage
+  load()
+}
+
+const openCreate = () => {
   editingId.value = null
-  form.value = { name: '', provider: '', baseUrl: '', apiKey: '', method: 'POST', temperature: 0.7, enabled: true, remark: '' }
-  visible.value = true 
+  form.value = createEmptyForm()
+  visible.value = true
 }
 
-const openEdit = (row: any) => { 
+const openEdit = (row: AdminModelItem) => {
   editingId.value = row.id
-  form.value = { ...row }
-  visible.value = true 
+  form.value = {
+    modelId: row.modelId,
+    name: row.name,
+    provider: row.provider || '',
+    baseUrl: row.baseUrl || '',
+    apiKey: row.apiKey || '',
+    temperature: row.temperature ?? 0.7,
+    remark: row.remark || '',
+  }
+  visible.value = true
 }
 
-const save = async () => { 
+const save = async () => {
+  if (!form.value.name || !form.value.modelId) {
+    ElMessage.warning('请先填写模型名称和模型标识')
+    return
+  }
+
   try {
     if (editingId.value) {
       await adminAPI.updateModel(editingId.value, form.value)
-      ElMessage.success('更新成功')
+      ElMessage.success('模型已更新')
     } else {
       await adminAPI.createModel(form.value)
-      ElMessage.success('创建成功')
+      ElMessage.success('模型已创建')
     }
     visible.value = false
     await load()
-  } catch (e) {
-    ElMessage.error('保存失败')
+  } catch (saveError: any) {
+    ElMessage.error(saveError?.message || '保存失败')
   }
 }
 
-const toggle = async (row: any) => { 
+const toggle = async (row: AdminModelItem) => {
   try {
     await adminAPI.toggleModel(row.id, !row.enabled)
-    ElMessage.success(row.enabled ? '已禁用' : '已启用')
+    ElMessage.success(row.enabled ? '模型已禁用' : '模型已启用')
     await load()
-  } catch (e) {
-    ElMessage.error('操作失败')
+  } catch (actionError: any) {
+    ElMessage.error(actionError?.message || '状态更新失败')
   }
 }
 
-const setDefault = async (row: any) => { 
+const setDefault = async (row: AdminModelItem) => {
   try {
     await adminAPI.setDefaultModel(row.id)
-    ElMessage.success('已设为默认模型')
+    ElMessage.success('默认模型已更新')
     await load()
-  } catch (e) {
-    ElMessage.error('操作失败')
+  } catch (actionError: any) {
+    ElMessage.error(actionError?.message || '设置默认模型失败')
   }
 }
 
-const test = async (row: any) => { 
+const test = async (row: AdminModelItem) => {
   try {
-    await adminAPI.testModel(row.id)
-    ElMessage.success('连接成功')
-  } catch (e) {
-    ElMessage.error('连接失败')
+    const result: any = await adminAPI.testModel(row.id)
+    if (result?.success === false) {
+      ElMessage.error(result?.message || '连接测试失败')
+      return
+    }
+    ElMessage.success('连接测试成功')
+  } catch (actionError: any) {
+    ElMessage.error(actionError?.message || '连接测试失败')
   }
 }
 
-const remove = async (row: any) => { 
+const remove = async (row: AdminModelItem) => {
   try {
     await adminAPI.deleteModel(row.id)
-    ElMessage.success('删除成功')
+    ElMessage.success('模型已删除')
     await load()
-  } catch (e) {
-    ElMessage.error('删除失败')
+  } catch (actionError: any) {
+    ElMessage.error(actionError?.message || '删除失败')
   }
 }
 
@@ -225,249 +294,193 @@ onMounted(load)
   margin: 0 auto;
 }
 
-.page-header {
-  padding: 24px;
-  margin-bottom: 24px;
+.page-header,
+.model-card,
+.empty-state {
   border-radius: 16px;
 }
 
-.header-content {
+.page-header {
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.header-content,
+.header-actions,
+.model-actions,
+.dialog-footer {
   display: flex;
+  gap: 12px;
+}
+
+.header-content {
   justify-content: space-between;
   align-items: center;
-  gap: 20px;
 }
 
 .header-title {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
 
 .header-title i {
-  font-size: 28px;
   color: var(--accent-primary);
+  font-size: 28px;
 }
 
 .header-title h1 {
-  font-size: 24px;
-  font-weight: 600;
-  color: var(--text-primary);
   margin: 0;
+  color: var(--text-primary);
 }
 
-.header-actions {
-  display: flex;
-  gap: 12px;
-  align-items: center;
+.header-title p {
+  margin: 6px 0 0;
+  color: var(--text-muted);
+  font-size: 14px;
 }
 
 .search-box {
   position: relative;
-  display: flex;
-  align-items: center;
 }
 
 .search-box i {
   position: absolute;
-  left: 16px;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
   color: var(--text-muted);
-  font-size: 14px;
 }
 
 .search-box input {
-  width: 240px;
-  padding: 10px 16px 10px 40px;
+  width: 260px;
+  padding: 10px 14px 10px 40px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--glass-border);
   border-radius: 10px;
   color: var(--text-primary);
-  font-size: 14px;
-  transition: all 0.2s;
 }
 
-.search-box input:focus {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: var(--accent-primary);
-  box-shadow: 0 0 0 3px rgba(168, 199, 250, 0.1);
-}
-
-.search-box input::placeholder {
-  color: var(--text-muted);
+.primary-btn,
+.secondary-btn,
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  cursor: pointer;
 }
 
 .primary-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
   background: var(--accent-primary);
   color: #0a0a0a;
   border: none;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
 }
 
-.primary-btn:hover {
-  background: var(--accent-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(168, 199, 250, 0.3);
-}
-
-.secondary-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
+.secondary-btn,
+.action-btn {
   background: rgba(255, 255, 255, 0.05);
-  color: var(--text-primary);
   border: 1px solid var(--glass-border);
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
+  color: var(--text-secondary);
 }
 
-.secondary-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: var(--accent-primary);
+.action-btn.primary {
+  color: var(--accent-primary);
+  border-color: rgba(168, 199, 250, 0.4);
+}
+
+.action-btn.danger {
+  color: #f87171;
+  border-color: rgba(248, 113, 113, 0.2);
 }
 
 .models-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
   gap: 20px;
-  margin-bottom: 24px;
 }
 
 .model-card {
   padding: 20px;
-  border-radius: 16px;
-  transition: all 0.3s var(--ease-out);
-}
-
-.model-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 }
 
 .model-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
   margin-bottom: 16px;
   padding-bottom: 16px;
   border-bottom: 1px solid var(--glass-border);
 }
 
-.model-info h3 {
-  font-size: 18px;
-  font-weight: 600;
+.model-header h3 {
+  margin: 0 0 10px;
   color: var(--text-primary);
-  margin: 0 0 8px 0;
 }
 
-.model-type {
-  display: inline-block;
-  padding: 4px 10px;
-  background: rgba(168, 199, 250, 0.1);
-  border: 1px solid rgba(168, 199, 250, 0.2);
-  border-radius: 6px;
-  font-size: 12px;
-  color: var(--accent-primary);
-  font-weight: 500;
-}
-
-.status-badge {
+.model-tags {
   display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tag {
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: 8px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-secondary);
   font-size: 12px;
-  font-weight: 500;
-  background: rgba(107, 114, 128, 0.2);
-  color: var(--text-muted);
 }
 
-.status-badge.active {
-  background: rgba(34, 197, 94, 0.1);
+.tag-provider {
+  color: var(--accent-primary);
+}
+
+.tag-success {
   color: #22c55e;
-  border: 1px solid rgba(34, 197, 94, 0.3);
 }
 
-.status-badge i {
-  font-size: 8px;
+.tag-muted {
+  color: #f87171;
+}
+
+.tag-default {
+  color: #fbbf24;
 }
 
 .model-body {
-  margin-bottom: 16px;
-}
-
-.model-field {
-  margin-bottom: 12px;
-}
-
-.model-field:last-child {
-  margin-bottom: 0;
+  display: grid;
+  gap: 12px;
 }
 
 .model-field label {
   display: block;
-  font-size: 12px;
-  color: var(--text-muted);
   margin-bottom: 4px;
-  font-weight: 500;
+  color: var(--text-muted);
+  font-size: 12px;
 }
 
 .field-value {
-  font-size: 13px;
   color: var(--text-secondary);
   word-break: break-all;
 }
 
 .model-actions {
-  display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  margin-top: 16px;
   padding-top: 16px;
   border-top: 1px solid var(--glass-border);
 }
 
-.action-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--glass-border);
-  border-radius: 8px;
-  color: var(--text-secondary);
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.2s;
+.empty-state {
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--text-muted);
 }
 
-.action-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--text-primary);
-  border-color: var(--accent-primary);
-}
-
-.action-btn.primary {
-  background: var(--accent-subtle);
-  color: var(--accent-primary);
-  border-color: var(--accent-primary);
-}
-
-.action-btn.danger:hover {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-  border-color: #ef4444;
+.empty-state i {
+  font-size: 48px;
+  margin-bottom: 12px;
 }
 
 .pagination {
@@ -476,91 +489,29 @@ onMounted(load)
   margin-top: 24px;
 }
 
-.form-row {
+.form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
 }
 
-.dialog-footer {
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-}
-
-/* Element Plus 样式覆盖 */
 :deep(.el-dialog) {
   background: var(--glass-bg);
-  backdrop-filter: blur(20px);
   border: 1px solid var(--glass-border);
   border-radius: 16px;
 }
 
-:deep(.el-dialog__header) {
-  border-bottom: 1px solid var(--glass-border);
-  padding: 20px 24px;
-}
-
-:deep(.el-dialog__title) {
-  color: var(--text-primary);
-  font-size: 18px;
-  font-weight: 600;
-}
-
-:deep(.el-dialog__body) {
-  padding: 24px;
-}
-
+:deep(.el-dialog__title),
 :deep(.el-form-item__label) {
   color: var(--text-primary);
-  font-weight: 500;
-  margin-bottom: 8px;
 }
 
-:deep(.el-input__wrapper) {
+:deep(.el-input__wrapper),
+:deep(.el-textarea__inner),
+:deep(.el-input-number .el-input__wrapper) {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--glass-border);
   box-shadow: none;
-  border-radius: 10px;
-}
-
-:deep(.el-input__wrapper:hover) {
-  background: rgba(255, 255, 255, 0.08);
-}
-
-:deep(.el-input__wrapper.is-focus) {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: var(--accent-primary);
-  box-shadow: 0 0 0 3px rgba(168, 199, 250, 0.1);
-}
-
-:deep(.el-input__inner) {
-  color: var(--text-primary);
-}
-
-:deep(.el-textarea__inner) {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--glass-border);
-  color: var(--text-primary);
-  border-radius: 10px;
-}
-
-:deep(.el-textarea__inner:focus) {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: var(--accent-primary);
-  box-shadow: 0 0 0 3px rgba(168, 199, 250, 0.1);
-}
-
-:deep(.el-select .el-input__wrapper) {
-  background: rgba(255, 255, 255, 0.05);
-}
-
-:deep(.el-input-number) {
-  width: 100%;
-}
-
-:deep(.el-input-number .el-input__wrapper) {
-  background: rgba(255, 255, 255, 0.05);
 }
 
 :deep(.el-pagination) {
@@ -569,33 +520,19 @@ onMounted(load)
   --el-pagination-hover-color: var(--accent-primary);
 }
 
-:deep(.el-pagination button) {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--glass-border);
-  color: var(--text-secondary);
-}
+@media (max-width: 768px) {
+  .header-content,
+  .header-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
 
-:deep(.el-pagination button:hover) {
-  color: var(--accent-primary);
-  border-color: var(--accent-primary);
-}
+  .search-box input {
+    width: 100%;
+  }
 
-:deep(.el-pager li) {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--glass-border);
-  color: var(--text-secondary);
-  margin: 0 4px;
-  border-radius: 6px;
-}
-
-:deep(.el-pager li:hover) {
-  color: var(--accent-primary);
-  border-color: var(--accent-primary);
-}
-
-:deep(.el-pager li.is-active) {
-  background: var(--accent-primary);
-  color: #0a0a0a;
-  border-color: var(--accent-primary);
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

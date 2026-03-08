@@ -32,6 +32,9 @@ const emit = defineEmits<{
 }>()
 
 const formatMessage = (content: string) => {
+  // TODO: 生产环境需引入 DOMPurify 对 AI 返回内容进行 XSS 净化，例如：
+  // import DOMPurify from 'dompurify'
+  // return DOMPurify.sanitize(formatted)
   // 简单的代码块格式化
   return content
     .replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre><code class="language-$1">$2</code></pre>')

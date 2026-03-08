@@ -171,7 +171,7 @@ import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useAuthStore } from '@/composables/useAuthStore'
 import { useChatStore } from '@/composables/useChatStore'
-import { updateUserProfile, changeUserPassword } from '@/utils/mockApi'
+import { authAPI } from '@/utils/api'
 
 const props = defineProps<{
   modelValue: boolean
@@ -196,14 +196,14 @@ const formData = reactive({
 const stats = computed(() => ({
   totalConversations: chat.conversations.value.length,
   totalMessages: chat.conversations.value.reduce((sum, conv) => sum + conv.messages.length, 0),
-  totalTime: '42小时',
-  streak: '7天'
+  totalTime: '--',
+  streak: '--'
 }))
 
 watch(() => props.modelValue, (newVal) => {
-  if (newVal && auth.user) {
-    formData.username = auth.user.username
-    formData.nickname = auth.user.nickname || ''
+  if (newVal && auth.user.value) {
+    formData.username = auth.user.value.username
+    formData.nickname = (auth.user.value as any).nickname || ''
   }
 })
 
@@ -218,9 +218,9 @@ const updateProfile = async () => {
   }
 
   try {
-    await updateUserProfile({ nickname: formData.nickname })
-    if (auth.user) {
-      auth.user.nickname = formData.nickname
+    await authAPI.updateProfile({ nickname: formData.nickname })
+    if (auth.user.value) {
+      (auth.user.value as any).nickname = formData.nickname
     }
     ElMessage.success('资料更新成功')
   } catch (error: any) {
@@ -245,7 +245,7 @@ const changePassword = async () => {
   }
 
   try {
-    await changeUserPassword({
+    await authAPI.changePassword({
       oldPassword: formData.oldPassword,
       newPassword: formData.newPassword
     })

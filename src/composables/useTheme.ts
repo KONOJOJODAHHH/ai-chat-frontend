@@ -1,30 +1,52 @@
 import { ref, watchEffect, onMounted, computed } from 'vue'
 
 type Theme = 'light' | 'dark'
+type ThemeMode = 'system' | Theme
+
+const THEME_STORAGE_KEY = 'theme-mode'
 
 export function useTheme() {
-  const theme = ref<Theme>('light')
+  const themeMode = ref<ThemeMode>('system')
 
   const getPreferredTheme = (): Theme => {
-    const saved = localStorage.getItem('theme') as Theme | null
-    if (saved === 'light' || saved === 'dark') return saved
     return window.matchMedia('(prefers-color-scheme: dark)').matches
       ? 'dark'
       : 'light'
   }
 
+  const getSavedThemeMode = (): ThemeMode => {
+    const saved = localStorage.getItem(THEME_STORAGE_KEY) as ThemeMode | null
+    if (saved === 'system' || saved === 'light' || saved === 'dark') return saved
+    return 'system'
+  }
+
+  const resolveTheme = (): Theme => {
+    if (themeMode.value === 'system') {
+      return getPreferredTheme()
+    }
+
+    return themeMode.value
+  }
+
   const applyTheme = (t: Theme) => {
     document.documentElement.classList.remove('light', 'dark')
     document.documentElement.classList.add(t)
-    localStorage.setItem('theme', t)
+  }
+
+  const setThemeMode = (mode: ThemeMode) => {
+    themeMode.value = mode
+    localStorage.setItem(THEME_STORAGE_KEY, mode)
   }
 
   const toggleTheme = () => {
-    theme.value = theme.value === 'light' ? 'dark' : 'light'
+    const nextTheme = resolveTheme() === 'light' ? 'dark' : 'light'
+    setThemeMode(nextTheme)
   }
 
+  const theme = computed<Theme>(() => resolveTheme())
+
   onMounted(() => {
-    theme.value = getPreferredTheme()
+    themeMode.value = getSavedThemeMode()
     applyTheme(theme.value)
   })
 
@@ -34,6 +56,8 @@ export function useTheme() {
 
   return {
     theme,
+    themeMode,
+    setThemeMode,
     toggleTheme,
     isDark: computed(() => theme.value === 'dark'),
   }

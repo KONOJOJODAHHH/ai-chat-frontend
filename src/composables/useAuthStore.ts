@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 export interface UserProfile {
   id: string
   username: string
+  nickname?: string
   avatarUrl?: string
   role?: 'admin' | 'user'
 }
@@ -15,6 +16,7 @@ export const useAuthStore = () => {
   const rememberMe = ref<boolean>(localStorage.getItem('rememberMe') === 'true')
 
   const isAuthenticated = computed(() => !!token.value)
+  const isAdmin = computed(() => user.value?.role === 'admin')
 
   const setToken = (t: string | null, remember?: boolean) => {
     token.value = t
@@ -43,13 +45,17 @@ export const useAuthStore = () => {
     if (cached) {
       try {
         user.value = JSON.parse(cached)
-      } catch {}
+      } catch {
+        user.value = null
+      }
     }
     if (token.value && fetcher) {
       try {
         const profile = await fetcher()
         if (profile) setUser(profile)
-      } catch {}
+      } catch {
+        user.value = null
+      }
     }
   }
 
@@ -64,6 +70,7 @@ export const useAuthStore = () => {
     user,
     rememberMe,
     isAuthenticated,
+    isAdmin,
     setToken,
     setUser,
     init,

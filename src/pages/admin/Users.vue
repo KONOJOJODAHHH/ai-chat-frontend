@@ -4,16 +4,24 @@
       <div class="header-content">
         <div class="header-title">
           <i class="fa-solid fa-users"></i>
-          <h1>用户管理</h1>
+          <div>
+            <h1>用户管理</h1>
+            <p>查看、禁用、重置密码和调整角色</p>
+          </div>
         </div>
         <div class="search-box">
           <i class="fa-solid fa-search"></i>
-          <input v-model="q" placeholder="搜索用户名" @input="load" />
+          <input
+            v-model.trim="q"
+            placeholder="搜索用户名或昵称"
+            @input="handleSearch"
+            @keyup.enter="load"
+          />
         </div>
       </div>
     </div>
 
-    <div class="users-grid">
+    <div class="users-grid" v-if="items.length">
       <div v-for="row in items" :key="row.id" class="user-card glass-card">
         <div class="user-header">
           <div class="user-avatar">
@@ -21,12 +29,12 @@
           </div>
           <div class="user-info">
             <h3>{{ row.username }}</h3>
-            <p v-if="row.nickname">{{ row.nickname }}</p>
+            <p>{{ row.nickname || '未设置昵称' }}</p>
           </div>
           <div class="user-badges">
             <span class="role-badge" :class="row.role">
               <i :class="row.role === 'admin' ? 'fa-solid fa-shield-halved' : 'fa-solid fa-user'"></i>
-              {{ row.role === 'admin' ? '管理员' : '用户' }}
+              {{ row.role === 'admin' ? '管理员' : '普通用户' }}
             </span>
             <span class="status-badge" :class="{ active: row.status === 'normal' }">
               <i class="fa-solid fa-circle"></i>
@@ -37,16 +45,16 @@
 
         <div class="user-body">
           <div class="user-field">
-            <label>用户ID</label>
+            <label>用户 ID</label>
             <div class="field-value">{{ row.id }}</div>
           </div>
           <div class="user-field">
             <label>注册时间</label>
-            <div class="field-value">{{ new Date(row.registeredAt).toLocaleString() }}</div>
+            <div class="field-value">{{ formatDateTime(row.createdAt || row.registeredAt) }}</div>
           </div>
           <div class="user-field">
             <label>最近登录</label>
-            <div class="field-value">{{ new Date(row.lastLoginAt).toLocaleString() }}</div>
+            <div class="field-value">{{ formatDateTime(row.lastLoginAt) }}</div>
           </div>
         </div>
 
@@ -59,7 +67,7 @@
             <i class="fa-solid fa-key"></i>
             <span>重置密码</span>
           </button>
-          <select class="role-select" v-model="row.role" @change="setRole(row, row.role)">
+          <select class="role-select" :value="row.role" @change="changeRole(row, $event)">
             <option value="user">普通用户</option>
             <option value="admin">管理员</option>
           </select>
@@ -67,59 +75,105 @@
       </div>
     </div>
 
+    <div v-else class="empty-state glass-card">
+      <i class="fa-solid fa-user-slash"></i>
+      <p>{{ loading ? '加载中...' : '暂无用户数据' }}</p>
+    </div>
+
     <div class="pagination" v-if="total > size">
-      <el-pagination layout="prev, pager, next" :total="total" :page-size="size" :current-page="page" @current-change="p=>{page=p;load()}" />
+      <el-pagination
+        layout="prev, pager, next"
+        :total="total"
+        :page-size="size"
+        :current-page="page"
+        @current-change="handlePageChange"
+      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { adminAPI } from '@/utils/api'
+import { onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
+import { adminAPI, type AdminUserItem } from '@/utils/api'
 
 const q = ref('')
-const items = ref<any[]>([])
+const items = ref<AdminUserItem[]>([])
 const total = ref(0)
 const page = ref(1)
 const size = ref(10)
+const loading = ref(false)
+let searchTimer: ReturnType<typeof setTimeout> | null = null
 
-const load = async () => { 
+const formatDateTime = (value?: string) => {
+  if (!value) {
+    return '--'
+  }
+
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleString()
+}
+
+const load = async () => {
+  loading.value = true
   try {
-    const res: any = await adminAPI.listUsers(q.value, page.value, size.value)
-    items.value = res.items
-    total.value = res.total
-  } catch (e) {
-    ElMessage.error('加载失败')
+    const result = await adminAPI.listUsers(q.value, page.value, size.value)
+    items.value = result.items
+    total.value = result.total
+  } catch (loadError: any) {
+    ElMessage.error(loadError?.message || '用户列表加载失败')
+  } finally {
+    loading.value = false
   }
 }
 
-const toggle = async (row: any) => { 
+const handleSearch = () => {
+  page.value = 1
+  if (searchTimer) {
+    clearTimeout(searchTimer)
+  }
+  searchTimer = setTimeout(() => {
+    load()
+  }, 250)
+}
+
+const handlePageChange = (nextPage: number) => {
+  page.value = nextPage
+  load()
+}
+
+const toggle = async (row: AdminUserItem) => {
   try {
-    await adminAPI.toggleUser(row.id, row.status === 'normal' ? 'disabled' : 'normal')
-    ElMessage.success(row.status === 'normal' ? '已禁用' : '已启用')
+    const nextStatus = row.status === 'normal' ? 'disabled' : 'normal'
+    await adminAPI.toggleUser(row.id, nextStatus)
+    ElMessage.success(nextStatus === 'normal' ? '用户已启用' : '用户已禁用')
     await load()
-  } catch (e) {
-    ElMessage.error('操作失败')
+  } catch (actionError: any) {
+    ElMessage.error(actionError?.message || '状态更新失败')
   }
 }
 
-const reset = async (row: any) => { 
+const reset = async (row: AdminUserItem) => {
   try {
-    await adminAPI.resetPassword(row.id)
-    ElMessage.success('密码已重置')
-  } catch (e) {
-    ElMessage.error('重置失败')
+    const result: any = await adminAPI.resetPassword(row.id)
+    const password = result?.defaultPassword ? `，临时密码：${result.defaultPassword}` : ''
+    ElMessage.success(`密码已重置${password}`)
+  } catch (actionError: any) {
+    ElMessage.error(actionError?.message || '重置密码失败')
   }
 }
 
-const setRole = async (row: any, role: string) => { 
+const changeRole = async (row: AdminUserItem, event: Event) => {
+  const target = event.target as HTMLSelectElement
+  const nextRole = target.value
+
   try {
-    await adminAPI.setRole(row.id, role)
+    await adminAPI.setRole(row.id, nextRole)
     ElMessage.success('角色已更新')
     await load()
-  } catch (e) {
-    ElMessage.error('更新失败')
+  } catch (actionError: any) {
+    target.value = row.role
+    ElMessage.error(actionError?.message || '角色更新失败')
   }
 }
 
@@ -132,10 +186,15 @@ onMounted(load)
   margin: 0 auto;
 }
 
+.page-header,
+.user-card,
+.empty-state {
+  border-radius: 16px;
+}
+
 .page-header {
   padding: 24px;
   margin-bottom: 24px;
-  border-radius: 16px;
 }
 
 .header-content {
@@ -148,77 +207,65 @@ onMounted(load)
 .header-title {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
 
 .header-title i {
-  font-size: 28px;
   color: var(--accent-primary);
+  font-size: 28px;
 }
 
 .header-title h1 {
-  font-size: 24px;
-  font-weight: 600;
-  color: var(--text-primary);
   margin: 0;
+  color: var(--text-primary);
+  font-size: 24px;
+}
+
+.header-title p {
+  margin: 6px 0 0;
+  color: var(--text-muted);
+  font-size: 14px;
 }
 
 .search-box {
   position: relative;
-  display: flex;
-  align-items: center;
 }
 
 .search-box i {
   position: absolute;
-  left: 16px;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
   color: var(--text-muted);
-  font-size: 14px;
 }
 
 .search-box input {
   width: 280px;
-  padding: 10px 16px 10px 40px;
+  padding: 10px 14px 10px 40px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--glass-border);
   border-radius: 10px;
   color: var(--text-primary);
-  font-size: 14px;
-  transition: all 0.2s;
-}
-
-.search-box input:focus {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: var(--accent-primary);
-  box-shadow: 0 0 0 3px rgba(168, 199, 250, 0.1);
-}
-
-.search-box input::placeholder {
-  color: var(--text-muted);
 }
 
 .users-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
   gap: 20px;
-  margin-bottom: 24px;
 }
 
 .user-card {
   padding: 20px;
-  border-radius: 16px;
-  transition: all 0.3s var(--ease-out);
 }
 
-.user-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+.user-header,
+.user-actions {
+  display: flex;
+  gap: 12px;
 }
 
 .user-header {
-  display: flex;
   align-items: center;
-  gap: 12px;
   margin-bottom: 16px;
   padding-bottom: 16px;
   border-bottom: 1px solid var(--glass-border);
@@ -228,29 +275,31 @@ onMounted(load)
   width: 48px;
   height: 48px;
   border-radius: 12px;
-  background: linear-gradient(135deg, var(--accent-primary), var(--accent-hover));
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
   color: #0a0a0a;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-hover));
 }
 
 .user-info {
   flex: 1;
 }
 
+.user-info h3,
+.user-info p {
+  margin: 0;
+}
+
 .user-info h3 {
-  font-size: 16px;
-  font-weight: 600;
   color: var(--text-primary);
-  margin: 0 0 4px 0;
+  font-size: 16px;
 }
 
 .user-info p {
-  font-size: 13px;
   color: var(--text-muted);
-  margin: 0;
+  font-size: 13px;
+  margin-top: 4px;
 }
 
 .user-badges {
@@ -260,45 +309,34 @@ onMounted(load)
   align-items: flex-end;
 }
 
-.role-badge {
-  display: flex;
+.role-badge,
+.status-badge {
+  display: inline-flex;
   align-items: center;
   gap: 6px;
   padding: 4px 10px;
-  border-radius: 6px;
+  border-radius: 999px;
   font-size: 12px;
-  font-weight: 500;
 }
 
 .role-badge.admin {
   background: rgba(168, 199, 250, 0.1);
   color: var(--accent-primary);
-  border: 1px solid rgba(168, 199, 250, 0.3);
 }
 
 .role-badge.user {
-  background: rgba(107, 114, 128, 0.1);
+  background: rgba(107, 114, 128, 0.14);
   color: var(--text-secondary);
-  border: 1px solid rgba(107, 114, 128, 0.3);
 }
 
 .status-badge {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 500;
-  background: rgba(239, 68, 68, 0.1);
+  background: rgba(239, 68, 68, 0.12);
   color: #ef4444;
-  border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
 .status-badge.active {
-  background: rgba(34, 197, 94, 0.1);
+  background: rgba(34, 197, 94, 0.12);
   color: #22c55e;
-  border: 1px solid rgba(34, 197, 94, 0.3);
 }
 
 .status-badge i {
@@ -306,79 +344,58 @@ onMounted(load)
 }
 
 .user-body {
-  margin-bottom: 16px;
-}
-
-.user-field {
-  margin-bottom: 12px;
-}
-
-.user-field:last-child {
-  margin-bottom: 0;
+  display: grid;
+  gap: 12px;
 }
 
 .user-field label {
   display: block;
-  font-size: 12px;
-  color: var(--text-muted);
   margin-bottom: 4px;
-  font-weight: 500;
+  color: var(--text-muted);
+  font-size: 12px;
 }
 
 .field-value {
-  font-size: 13px;
   color: var(--text-secondary);
   font-family: 'Consolas', monospace;
 }
 
 .user-actions {
-  display: flex;
-  gap: 8px;
+  margin-top: 16px;
   padding-top: 16px;
   border-top: 1px solid var(--glass-border);
 }
 
+.action-btn,
+.role-select {
+  border-radius: 10px;
+  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+}
+
 .action-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
   padding: 8px 12px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--glass-border);
-  border-radius: 8px;
-  color: var(--text-secondary);
-  font-size: 13px;
   cursor: pointer;
-  transition: all 0.2s;
-}
-
-.action-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--text-primary);
-  border-color: var(--accent-primary);
 }
 
 .role-select {
   flex: 1;
   padding: 8px 12px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--glass-border);
-  border-radius: 8px;
-  color: var(--text-primary);
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.2s;
 }
 
-.role-select:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: var(--accent-primary);
+.empty-state {
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--text-muted);
 }
 
-.role-select:focus {
-  outline: none;
-  border-color: var(--accent-primary);
-  box-shadow: 0 0 0 3px rgba(168, 199, 250, 0.1);
+.empty-state i {
+  font-size: 48px;
+  margin-bottom: 12px;
 }
 
 .pagination {
@@ -393,33 +410,16 @@ onMounted(load)
   --el-pagination-hover-color: var(--accent-primary);
 }
 
-:deep(.el-pagination button) {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--glass-border);
-  color: var(--text-secondary);
-}
+@media (max-width: 768px) {
+  .header-content,
+  .user-header,
+  .user-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
 
-:deep(.el-pagination button:hover) {
-  color: var(--accent-primary);
-  border-color: var(--accent-primary);
-}
-
-:deep(.el-pager li) {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--glass-border);
-  color: var(--text-secondary);
-  margin: 0 4px;
-  border-radius: 6px;
-}
-
-:deep(.el-pager li:hover) {
-  color: var(--accent-primary);
-  border-color: var(--accent-primary);
-}
-
-:deep(.el-pager li.is-active) {
-  background: var(--accent-primary);
-  color: #0a0a0a;
-  border-color: var(--accent-primary);
+  .search-box input {
+    width: 100%;
+  }
 }
 </style>

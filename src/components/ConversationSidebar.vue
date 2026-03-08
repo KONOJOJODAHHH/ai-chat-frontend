@@ -1,5 +1,5 @@
 <template>
-  <aside class="conversation-sidebar glass-card">
+  <aside class="conversation-sidebar glass-card" :class="densityClass">
     <div class="logo-area">
       <i class="fa-solid fa-cube logo-icon"></i>
       <span>MATRIX OS</span>
@@ -56,6 +56,10 @@
         <i class="fa-solid fa-gear"></i>
         <span>系统设置</span>
       </div>
+      <div v-if="isAdmin" class="user-menu-item" @click.stop="openAdmin">
+        <i class="fa-solid fa-shield-halved"></i>
+        <span>进入后台</span>
+      </div>
       <div class="user-menu-divider"></div>
       <div class="user-menu-item danger" @click.stop="handleLogout">
         <i class="fa-solid fa-right-from-bracket"></i>
@@ -66,7 +70,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useAuthStore } from '@/composables/useAuthStore'
 import type { Conversation } from '@/composables/useChatStore'
@@ -74,6 +79,7 @@ import type { Conversation } from '@/composables/useChatStore'
 const props = defineProps<{
   conversations: Conversation[]
   currentConversation: Conversation | null
+  density?: 'comfortable' | 'compact'
 }>()
 
 const emit = defineEmits<{
@@ -85,10 +91,13 @@ const emit = defineEmits<{
 }>()
 
 const auth = useAuthStore()
+const router = useRouter()
 const activeMenu = ref<string | null>(null)
 const showUserMenu = ref(false)
 
-const username = computed(() => auth.user?.username || '用户')
+const username = computed(() => auth.user.value?.nickname || auth.user.value?.username || '用户')
+const isAdmin = computed(() => auth.isAdmin.value)
+const densityClass = computed(() => props.density === 'compact' ? 'compact' : 'comfortable')
 
 const createNewConversation = () => {
   emit('create')
@@ -140,6 +149,12 @@ const openSettings = () => {
   emit('openSettings')
 }
 
+const openAdmin = () => {
+  showUserMenu.value = false
+  if (!auth.isAdmin.value) return
+  router.push('/admin/dashboard')
+}
+
 const handleLogout = () => {
   showUserMenu.value = false
   ElMessageBox.confirm('确定要退出登录吗？', '退出确认', {
@@ -149,12 +164,12 @@ const handleLogout = () => {
   }).then(() => {
     auth.logout()
     ElMessage.success('已注销')
-    window.location.href = '/login'
+    router.replace('/login')
   }).catch(() => {})
 }
 
-// 点击外部关闭菜单
-document.addEventListener('click', (e) => {
+// 点击外部关闭菜单（使用 onMounted/onUnmounted 避免内存泄漏）
+const handleOutsideClick = (e: MouseEvent) => {
   const target = e.target as HTMLElement
   if (!target.closest('.conversation-actions')) {
     activeMenu.value = null
@@ -162,7 +177,9 @@ document.addEventListener('click', (e) => {
   if (!target.closest('.user-bar') && !target.closest('.user-dropdown-menu')) {
     showUserMenu.value = false
   }
-})
+}
+onMounted(() => document.addEventListener('click', handleOutsideClick))
+onUnmounted(() => document.removeEventListener('click', handleOutsideClick))
 </script>
 
 <style scoped>
@@ -271,6 +288,19 @@ document.addEventListener('click', (e) => {
   background: rgba(255,255,255,0.08);
   color: var(--text-primary);
   font-weight: 500;
+}
+
+.conversation-sidebar.compact .new-chat-btn {
+  padding: 11px 12px;
+}
+
+.conversation-sidebar.compact .conversation-item {
+  padding: 9px 10px;
+  font-size: 13px;
+}
+
+.conversation-sidebar.compact .group-title {
+  font-size: 10px;
 }
 
 .conversation-item i:first-child {

@@ -11,7 +11,7 @@
           <span>管理后台</span>
         </div>
       </div>
-      
+
       <nav class="sidebar-nav">
         <router-link
           v-for="item in menuItems"
@@ -26,13 +26,19 @@
       </nav>
 
       <div class="sidebar-footer">
-        <router-link to="/" class="back-btn">
-          <i class="fa-solid fa-arrow-left"></i>
-          <span>返回前台</span>
-        </router-link>
+        <div class="switch-stack">
+          <router-link to="/" class="back-btn primary">
+            <i class="fa-solid fa-comments"></i>
+            <span>前台聊天</span>
+          </router-link>
+          <router-link to="/settings/general" class="back-btn">
+            <i class="fa-solid fa-sliders"></i>
+            <span>设置中心</span>
+          </router-link>
+        </div>
       </div>
     </aside>
-    
+
     <main class="admin-content">
       <router-view />
     </main>
@@ -40,23 +46,21 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
-const active = computed(() => route.path)
 
 const menuItems = [
-  { path: '/admin/dashboard', label: 'Dashboard', icon: 'fa-solid fa-chart-line' },
-  { path: '/admin/models', label: '模型管理', icon: 'fa-solid fa-microchip' },
+  { path: '/admin/dashboard', label: '仪表盘', icon: 'fa-solid fa-chart-line' },
   { path: '/admin/users', label: '用户管理', icon: 'fa-solid fa-users' },
   { path: '/admin/sessions', label: '会话管理', icon: 'fa-solid fa-comments' },
+  { path: '/admin/models', label: '模型管理', icon: 'fa-solid fa-microchip' },
+  { path: '/admin/prompts', label: '官方预设', icon: 'fa-solid fa-wand-magic-sparkles' },
   { path: '/admin/config', label: '系统配置', icon: 'fa-solid fa-gear' },
-  { path: '/admin/logs', label: '日志与统计', icon: 'fa-solid fa-chart-pie' },
-  { path: '/admin/prompts', label: 'Prompt管理', icon: 'fa-solid fa-wand-magic-sparkles' },
+  { path: '/admin/logs', label: '调用日志', icon: 'fa-solid fa-chart-pie' },
 ]
 
-const isActive = (path: string) => route.path === path || route.path.startsWith(path + '/')
+const isActive = (path: string) => route.path === path || route.path.startsWith(`${path}/`)
 </script>
 
 <style scoped>
@@ -163,6 +167,12 @@ const isActive = (path: string) => route.path === path || route.path.startsWith(
   border-top: 1px solid var(--glass-border);
 }
 
+.switch-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 .back-btn {
   display: flex;
   align-items: center;
@@ -180,6 +190,12 @@ const isActive = (path: string) => route.path === path || route.path.startsWith(
   transition: all 0.2s var(--ease-out);
 }
 
+.back-btn.primary {
+  background: rgba(168, 199, 250, 0.12);
+  border-color: rgba(168, 199, 250, 0.24);
+  color: var(--text-primary);
+}
+
 .back-btn:hover {
   background: rgba(255, 255, 255, 0.08);
   color: var(--accent-primary);
@@ -193,7 +209,6 @@ const isActive = (path: string) => route.path === path || route.path.startsWith(
   margin: 12px 12px 12px 0;
 }
 
-/* 滚动条样式 */
 .sidebar-nav::-webkit-scrollbar {
   width: 4px;
 }

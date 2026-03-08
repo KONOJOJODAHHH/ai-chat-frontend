@@ -1,80 +1,83 @@
 <template>
   <div class="admin-page">
     <div class="page-header glass-card">
-      <div class="header-title">
-        <i class="fa-solid fa-chart-pie"></i>
-        <h1>日志与统计</h1>
-      </div>
-      <div class="filter-bar">
-        <el-date-picker v-model="date" type="daterange" start-placeholder="开始日期" end-placeholder="结束日期" />
+      <div class="header-content">
+        <div class="header-title">
+          <i class="fa-solid fa-wave-square"></i>
+          <div>
+            <h1>调用日志</h1>
+            <p>展示真实聊天调用结果、模型、智能体与耗时，不再承载空实现提示。</p>
+          </div>
+        </div>
+
         <div class="search-box">
           <i class="fa-solid fa-search"></i>
-          <input v-model="model" placeholder="搜索模型" />
+          <input v-model.trim="action" placeholder="按结果或模型关键词筛选" @keyup.enter="load" />
         </div>
-        <button class="primary-btn" @click="load">
-          <i class="fa-solid fa-magnifying-glass"></i>
-          <span>查询</span>
-        </button>
       </div>
     </div>
 
-    <div class="logs-list">
-      <div v-for="(row, idx) in items" :key="idx" class="log-card glass-card">
+    <div class="toolbar">
+      <button class="primary-btn" @click="load">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <span>查询</span>
+      </button>
+    </div>
+
+    <div v-if="items.length" class="logs-list">
+      <div v-for="(row, index) in items" :key="index" class="log-card glass-card">
         <div class="log-header">
-          <div class="log-icon" :class="{ success: row.success, error: !row.success }">
+          <div class="log-status" :class="row.success ? 'success' : 'error'">
             <i :class="row.success ? 'fa-solid fa-check' : 'fa-solid fa-xmark'"></i>
           </div>
           <div class="log-info">
-            <div class="log-meta">
-              <span class="meta-item">
-                <i class="fa-solid fa-user"></i>
-                {{ row.user }}
-              </span>
-              <span class="meta-item">
-                <i class="fa-solid fa-microchip"></i>
-                {{ row.model }}
-              </span>
-              <span class="meta-item">
-                <i class="fa-solid fa-clock"></i>
-                {{ row.duration }}ms
-              </span>
+            <div class="log-line">
+              <span>用户：{{ row.user || '--' }}</span>
+              <span>模型：{{ row.model || '--' }}</span>
+              <span>智能体：{{ row.agent || '--' }}</span>
+              <span>耗时：{{ row.duration ?? '--' }}ms</span>
             </div>
-            <div class="log-time">{{ new Date(row.time).toLocaleString() }}</div>
-          </div>
-          <div class="log-status">
-            <span class="status-badge" :class="{ success: row.success, error: !row.success }">
-              <i class="fa-solid fa-circle"></i>
-              {{ row.success ? '成功' : '失败' }}
-            </span>
+            <div class="log-time">{{ formatDateTime(row.time) }}</div>
           </div>
         </div>
       </div>
     </div>
 
-    <div v-if="items.length === 0" class="empty-state">
+    <div v-else class="empty-state glass-card">
       <i class="fa-solid fa-inbox"></i>
-      <p>暂无日志记录</p>
+      <p>暂无调用日志</p>
+      <span>当用户开始实际对话后，这里会展示成功率、模型与耗时记录。</span>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { adminAPI } from '@/utils/api'
+import { onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
+import { adminAPI } from '@/utils/api'
 
-const date = ref<any>('')
-const model = ref('')
+const action = ref('')
 const items = ref<any[]>([])
 
-const load = async () => { 
+const formatDateTime = (value?: string) => {
+  if (!value) {
+    return '--'
+  }
+
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleString()
+}
+
+const load = async () => {
   try {
-    const res: any = await adminAPI.logs({ date: date.value, model: model.value })
-    items.value = res.items || []
-  } catch (e) {
-    ElMessage.error('加载日志失败')
+    const result = await adminAPI.logs({ action: action.value }, 1, 50)
+    items.value = result.items
+  } catch (loadError: any) {
+    ElMessage.error(loadError?.message || '日志加载失败')
   }
 }
+
+onMounted(load)
 </script>
 
 <style scoped>
@@ -83,17 +86,28 @@ const load = async () => {
   margin: 0 auto;
 }
 
+.page-header,
+.log-card,
+.empty-state {
+  border-radius: 16px;
+}
+
 .page-header {
   padding: 24px;
-  margin-bottom: 24px;
-  border-radius: 16px;
+  margin-bottom: 16px;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: center;
 }
 
 .header-title {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 20px;
+  gap: 14px;
 }
 
 .header-title i {
@@ -102,71 +116,54 @@ const load = async () => {
 }
 
 .header-title h1 {
-  font-size: 24px;
-  font-weight: 600;
-  color: var(--text-primary);
   margin: 0;
+  color: var(--text-primary);
 }
 
-.filter-bar {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
+.header-title p {
+  margin: 6px 0 0;
+  color: var(--text-muted);
+  font-size: 14px;
 }
 
 .search-box {
   position: relative;
-  display: flex;
-  align-items: center;
 }
 
 .search-box i {
   position: absolute;
-  left: 16px;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
   color: var(--text-muted);
-  font-size: 14px;
 }
 
 .search-box input {
   width: 240px;
-  padding: 10px 16px 10px 40px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--glass-border);
+  padding: 10px 14px 10px 40px;
   border-radius: 10px;
+  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.05);
   color: var(--text-primary);
-  font-size: 14px;
-  transition: all 0.2s;
 }
 
-.search-box input:focus {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: var(--accent-primary);
-  box-shadow: 0 0 0 3px rgba(168, 199, 250, 0.1);
-}
-
-.search-box input::placeholder {
-  color: var(--text-muted);
+.toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
 }
 
 .primary-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 20px;
-  background: var(--accent-primary);
-  color: #0a0a0a;
+  padding: 10px 16px;
   border: none;
   border-radius: 10px;
-  font-size: 14px;
-  font-weight: 600;
+  background: var(--accent-primary);
+  color: #0a0a0a;
   cursor: pointer;
-  transition: all 0.2s;
-}
-
-.primary-btn:hover {
-  background: var(--accent-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(168, 199, 250, 0.3);
+  font-weight: 600;
 }
 
 .logs-list {
@@ -176,130 +173,75 @@ const load = async () => {
 
 .log-card {
   padding: 16px 20px;
-  border-radius: 12px;
-  transition: all 0.2s;
-}
-
-.log-card:hover {
-  transform: translateX(4px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
 .log-header {
   display: flex;
-  align-items: center;
   gap: 16px;
+  align-items: center;
 }
 
-.log-icon {
+.log-status {
   width: 40px;
   height: 40px;
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
 }
 
-.log-icon.success {
-  background: rgba(34, 197, 94, 0.1);
+.log-status.success {
   color: #22c55e;
+  background: rgba(34, 197, 94, 0.1);
 }
 
-.log-icon.error {
-  background: rgba(239, 68, 68, 0.1);
+.log-status.error {
   color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
 }
 
 .log-info {
   flex: 1;
 }
 
-.log-meta {
+.log-line {
   display: flex;
   gap: 20px;
-  margin-bottom: 6px;
-}
-
-.meta-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
+  flex-wrap: wrap;
   color: var(--text-secondary);
 }
 
-.meta-item i {
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
 .log-time {
-  font-size: 12px;
+  margin-top: 8px;
   color: var(--text-muted);
-}
-
-.log-status {
-  margin-left: auto;
-}
-
-.status-badge {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: 8px;
   font-size: 12px;
-  font-weight: 500;
-}
-
-.status-badge.success {
-  background: rgba(34, 197, 94, 0.1);
-  color: #22c55e;
-  border: 1px solid rgba(34, 197, 94, 0.3);
-}
-
-.status-badge.error {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-  border: 1px solid rgba(239, 68, 68, 0.3);
-}
-
-.status-badge i {
-  font-size: 8px;
 }
 
 .empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
   padding: 60px 20px;
+  text-align: center;
   color: var(--text-muted);
 }
 
 .empty-state i {
-  font-size: 64px;
-  margin-bottom: 16px;
-  opacity: 0.3;
+  font-size: 48px;
+  margin-bottom: 12px;
 }
 
-.empty-state p {
-  font-size: 16px;
-  margin: 0;
+.empty-state span {
+  display: block;
+  margin-top: 8px;
+  font-size: 13px;
 }
 
-:deep(.el-date-editor) {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--glass-border);
-}
+@media (max-width: 768px) {
+  .header-content {
+    flex-direction: column;
+    align-items: stretch;
+  }
 
-:deep(.el-date-editor .el-input__wrapper) {
-  background: transparent;
-  box-shadow: none;
-}
-
-:deep(.el-date-editor:hover) {
-  border-color: var(--accent-primary);
+  .search-box input {
+    width: 100%;
+  }
 }
 </style>

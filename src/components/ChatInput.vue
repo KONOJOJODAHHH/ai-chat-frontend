@@ -33,12 +33,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { ElMessage } from 'element-plus'
 
 const props = defineProps<{
   loading: boolean
   canRegenerate: boolean
+  sendShortcut?: 'enter' | 'ctrl-enter'
 }>()
 
 const emit = defineEmits<{
@@ -79,12 +80,24 @@ const sendMessage = () => {
 }
 
 const handleEnterKey = (event: KeyboardEvent) => {
-  if (event.ctrlKey || event.shiftKey) {
-    // Ctrl+Enter 或 Shift+Enter 换行
+  if (props.sendShortcut === 'ctrl-enter') {
+    if (event.ctrlKey) {
+      event.preventDefault()
+      sendMessage()
+      return
+    }
+
+    if (event.shiftKey) {
+      return
+    }
+
     return
   }
-  
-  // Enter 发送消息
+
+  if (event.ctrlKey || event.shiftKey) {
+    return
+  }
+
   event.preventDefault()
   sendMessage()
 }
@@ -100,22 +113,13 @@ const openPrompts = () => {
 
 const uploadFile = () => {
   showToolsMenu.value = false
-  const input = document.createElement('input')
-  input.type = 'file'
-  input.onchange = (e: any) => {
-    const file = e.target.files[0]
-    if (file) {
-      ElMessage.success(`已选择文件: ${file.name}`)
-      // 这里可以添加文件上传逻辑
-    }
-  }
-  input.click()
+  ElMessage.info('文件上传功能暂未接入后端接口')
 }
 
-// 点击外部关闭工具菜单
-document.addEventListener('click', () => {
-  showToolsMenu.value = false
-})
+// 点击外部关闭工具菜单（使用 onMounted/onUnmounted 避免内存泄漏）
+const handleOutsideClick = () => { showToolsMenu.value = false }
+onMounted(() => document.addEventListener('click', handleOutsideClick))
+onUnmounted(() => document.removeEventListener('click', handleOutsideClick))
 </script>
 
 <style scoped>

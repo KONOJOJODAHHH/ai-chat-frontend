@@ -1,21 +1,35 @@
-<template>
+﻿<template>
   <div class="chat-container">
     <ConversationSidebar
       :conversations="sortedConversations"
       :current-conversation="currentConversation"
+      :density="chatStore.preferences.value.conversationDensity"
       @select="selectConversation"
       @create="createConversation"
       @delete="deleteConversation"
       @rename="renameConversation"
-      @open-settings="showSettings = true"
+      @open-settings="goToSettings"
     />
     
     <div class="chat-main">
       <div class="chat-header">
         <div class="header-left">
-          <h2>{{ currentConversation?.title || '新建对话' }}</h2>
+          <h2>{{ currentConversation?.title || '新对话' }}</h2>
         </div>
         <div class="header-right">
+          <button class="control-btn subtle" @click="goToSettings" title="设置中心">
+            <i class="fa-solid fa-sliders"></i>
+            <span>设置中心</span>
+          </button>
+          <button
+            v-if="auth.isAdmin.value"
+            class="control-btn subtle admin-entry"
+            @click="goToAdmin"
+            title="管理后台"
+          >
+            <i class="fa-solid fa-shield-halved"></i>
+            <span>管理后台</span>
+          </button>
           <button class="control-btn" @click="showModelConfig = true" title="模型配置">
             <i class="fa-solid fa-bolt" style="color: #eab308;"></i>
             <span>{{ currentModel.name }}</span>
@@ -29,7 +43,7 @@
           <div class="empty-content">
             <i class="fa-solid fa-robot empty-icon"></i>
             <h3>开始你的对话吧</h3>
-            <p>点击下方输入框左侧的加号可以使用提示词模板</p>
+            <p>点击下方输入框左侧的加号可以使用提示词模板。</p>
           </div>
         </div>
         
@@ -48,6 +62,7 @@
         <ChatInput
           :loading="isLoading"
           :can-regenerate="canRegenerate"
+          :send-shortcut="chatStore.preferences.value.sendShortcut"
           @send="sendMessage"
           @regenerate="regenerateMessage"
           @open-prompts="showPromptPanel = true"
@@ -60,11 +75,12 @@
       v-model="showModelConfig"
       :models="models"
       :current-model="currentModel"
-      @switch-model="switchModel"
-      @update-model="updateModelConfig"
+      :official-agents="chatStore.officialAgents.value"
+      :private-agents="chatStore.privateAgents.value"
+      :runtime-config="chatStore.resolveRuntimeConfig(currentConversation?.id)"
+      @apply-runtime="applyRuntimeConfig"
     />
     
-    <SettingsModal v-model="showSettings" />
     <PromptPanel v-model="showPromptPanel" @apply="applyPrompt" />
   </div>
 </template>
@@ -72,15 +88,44 @@
 <script setup lang="ts">
 import { ref, nextTick, onMounted, computed } from 'vue'
 import { ElMessage } from 'element-plus'
+import { useRouter } from 'vue-router'
 import ConversationSidebar from '@/components/ConversationSidebar.vue'
 import ChatMessage from '@/components/ChatMessage.vue'
 import ChatInput from '@/components/ChatInput.vue'
 import ModelConfig from '@/components/ModelConfig.vue'
-import SettingsModal from '@/components/SettingsModal.vue'
 import PromptPanel from '@/components/PromptPanel.vue'
-import { useChatStore } from '@/composables/useChatStore'
+import { useChatStore, type AIModel, type Conversation, type Message, type RuntimeConfigValues } from '@/composables/useChatStore'
 import { chatAPI } from '@/utils/api'
 import { useAuthStore } from '@/composables/useAuthStore'
+
+interface BackendMessage {
+  id?: string | number
+  role?: 'user' | 'assistant'
+  content?: string
+  createdAt?: string | Date
+}
+
+interface BackendConversation {
+  id?: string | number
+  title?: string
+  modelId?: string
+  agentId?: string | number
+  systemPrompt?: string
+  temperature?: number
+  messages?: BackendMessage[] | null
+  createdAt?: string | Date
+  updatedAt?: string | Date
+}
+
+interface BackendModel {
+  id?: string | number
+  modelId?: string
+  name?: string
+  provider?: string
+  baseUrl?: string
+  apiKey?: string
+  enabled?: boolean
+}
 
 const chatStore = useChatStore()
 const {
@@ -93,20 +138,68 @@ const {
   createConversation: storeCreateConversation,
   addMessage,
   deleteConversation: storeDeleteConversation,
+  setConversations,
+  setCurrentConversation,
+  upsertConversation,
   switchModel: storeSwitchModel,
-  updateModelConfig: storeUpdateModelConfig
+  updateModelConfig: storeUpdateModelConfig,
+  setModels,
+  setAgents
 } = chatStore
 
+const router = useRouter()
 const messagesContainer = ref<HTMLElement>()
 const chatInputRef = ref<InstanceType<typeof ChatInput>>()
 const showModelConfig = ref(false)
-const showSettings = ref(false)
 const showPromptPanel = ref(false)
 const auth = useAuthStore()
 
+const normalizeMessage = (message: BackendMessage): Message => ({
+  id: String(message.id ?? Date.now()),
+  content: message.content ?? '',
+  role: message.role === 'assistant' ? 'assistant' : 'user',
+  timestamp: message.createdAt ? new Date(message.createdAt) : new Date()
+})
+
+const normalizeConversation = (conversation: BackendConversation): Conversation => ({
+  id: String(conversation.id ?? Date.now()),
+  title: conversation.title?.trim() || '新对话',
+  modelId: conversation.modelId,
+  runtimeConfig: {
+    modelId: conversation.modelId,
+    agentId: conversation.agentId != null ? String(conversation.agentId) : undefined,
+    systemPrompt: conversation.systemPrompt,
+    temperature: conversation.temperature,
+  },
+  messages: Array.isArray(conversation.messages)
+    ? conversation.messages.map(normalizeMessage)
+    : [],
+  createdAt: conversation.createdAt ? new Date(conversation.createdAt) : new Date(),
+  updatedAt: conversation.updatedAt ? new Date(conversation.updatedAt) : new Date()
+})
+
+const normalizeModel = (model: BackendModel): AIModel => ({
+  id: model.modelId?.trim() || String(model.id ?? ''),
+  name: model.name?.trim() || model.modelId?.trim() || '未命名模型',
+  provider: model.provider?.trim() || 'openai-compatible',
+  apiKey: model.apiKey,
+  baseUrl: model.baseUrl,
+  temperature: 0.7,
+  isActive: model.enabled !== false
+})
+
+const resolveErrorMessage = (error: unknown, fallback: string) => {
+  const candidate = error as {
+    message?: string
+    response?: { data?: { msg?: string } }
+  }
+
+  return candidate?.response?.data?.msg || candidate?.message || fallback
+}
+
 const canRegenerate = computed(() => {
-  return currentConversation.value && 
-         currentConversation.value.messages.length > 0 && 
+  return currentConversation.value &&
+         currentConversation.value.messages.length > 0 &&
          currentConversation.value.messages[currentConversation.value.messages.length - 1].role === 'assistant' &&
          !isLoading.value
 })
@@ -127,13 +220,96 @@ const applyPrompt = (content: string) => {
   focusInput()
 }
 
+const loadModels = async (preferredModelId?: string) => {
+  const response = await chatAPI.getModels()
+  const modelList = Array.isArray(response)
+    ? response
+        .map(item => normalizeModel(item as BackendModel))
+        .filter(item => !!item.id)
+    : []
+
+  if (modelList.length > 0) {
+    setModels(modelList, preferredModelId)
+  }
+}
+
+const loadAgents = async () => {
+  try {
+    const response = await chatAPI.getAgents()
+    setAgents(response)
+  } catch (error) {
+    console.error('Load agents error:', error)
+  }
+}
+
+const loadConversationDetail = async (conversationId: string) => {
+  const response = await chatAPI.getConversation(conversationId)
+  if (!response) return null
+
+  const conversation = normalizeConversation(response as BackendConversation)
+  upsertConversation(conversation)
+
+  chatStore.setConversationRuntimeConfig(conversation.id, {
+    modelId: conversation.runtimeConfig?.modelId,
+    agentId: conversation.runtimeConfig?.agentId,
+    systemPrompt: conversation.runtimeConfig?.systemPrompt,
+    temperature: conversation.runtimeConfig?.temperature,
+  })
+
+  if (currentConversation.value?.id === conversation.id) {
+    setCurrentConversation(conversation)
+  }
+
+  return conversation
+}
+
+const loadConversations = async (preferredConversationId?: string) => {
+  const response = await chatAPI.getConversations()
+  const conversationList = Array.isArray(response)
+    ? response.map(item => normalizeConversation(item as BackendConversation))
+    : []
+
+  setConversations(conversationList)
+
+  const targetConversation = preferredConversationId
+    ? conversationList.find(item => item.id === preferredConversationId) || null
+    : conversationList[0] || null
+
+  setCurrentConversation(targetConversation || conversationList[0] || null)
+
+  const activeConversation = targetConversation || conversationList[0] || null
+  if (activeConversation?.modelId) {
+    storeSwitchModel(activeConversation.modelId)
+  }
+
+  return activeConversation
+}
+
 const createConversation = () => {
-  storeCreateConversation()
+  const conversation = storeCreateConversation()
+  const runtime = chatStore.resolveRuntimeConfig(conversation.id)
+  conversation.modelId = runtime.modelId || currentModel.value.id
+  chatStore.setConversationRuntimeConfig(conversation.id, runtime)
+  setCurrentConversation(conversation)
   focusInput()
 }
 
-const selectConversation = (conversation: any) => {
-  currentConversation.value = conversation
+const selectConversation = async (conversation: Conversation) => {
+  setCurrentConversation(conversation)
+
+  if (conversation.modelId) {
+    storeSwitchModel(conversation.modelId)
+  }
+
+  if (conversation.messages.length === 0) {
+    try {
+      await loadConversationDetail(conversation.id)
+      await scrollToBottom()
+    } catch (error) {
+      ElMessage.error('加载对话详情失败')
+      console.error('Load conversation detail error:', error)
+    }
+  }
 }
 
 const deleteConversation = async (id: string) => {
@@ -155,6 +331,10 @@ const renameConversation = (id: string, title: string) => {
 
 const switchModel = (modelId: string) => {
   storeSwitchModel(modelId)
+  if (currentConversation.value) {
+    currentConversation.value.modelId = modelId
+    chatStore.setConversationRuntimeConfig(currentConversation.value.id, { modelId })
+  }
   ElMessage.success(`已切换到 ${models.value.find(m => m.id === modelId)?.name}`)
 }
 
@@ -162,43 +342,94 @@ const updateModelConfig = (modelId: string, config: any) => {
   storeUpdateModelConfig(modelId, config)
 }
 
-const onLogout = () => {
-  auth.logout()
-  ElMessage.success('已注销')
-  window.location.href = '/login'
+const applyRuntimeConfig = (config: RuntimeConfigValues) => {
+  if (!currentConversation.value) {
+    const conversation = storeCreateConversation()
+    setCurrentConversation(conversation)
+  }
+
+  if (!currentConversation.value) return
+
+  if (config.agentId) {
+    chatStore.applyAgent(config.agentId, currentConversation.value.id)
+  }
+
+  chatStore.setConversationRuntimeConfig(currentConversation.value.id, config)
+
+  if (config.modelId) {
+    storeSwitchModel(config.modelId)
+    currentConversation.value.modelId = config.modelId
+  }
 }
 
+const goToSettings = () => {
+  router.push('/settings/general')
+}
+
+const goToAdmin = () => {
+  if (!auth.isAdmin.value) return
+  router.push('/admin/dashboard')
+}
 
 const sendMessage = async (message: string) => {
   if (!currentConversation.value) {
-    storeCreateConversation()
+    const conversation = storeCreateConversation()
+    setCurrentConversation(conversation)
   }
 
-  // 添加用户消息
   addMessage(message, 'user')
   await scrollToBottom()
 
   isLoading.value = true
-  
+
   try {
     const response = await chatAPI.sendMessage({
       message,
-      modelId: currentModel.value.id,
+      modelId: chatStore.resolveRuntimeConfig(currentConversation.value?.id).modelId || currentModel.value.id,
+      agentId: chatStore.resolveRuntimeConfig(currentConversation.value?.id).agentId,
+      systemPrompt: chatStore.resolveRuntimeConfig(currentConversation.value?.id).systemPrompt,
+      temperature: chatStore.resolveRuntimeConfig(currentConversation.value?.id).temperature,
       conversationId: currentConversation.value?.id
     })
 
-    // 添加AI回复
     if (response && typeof response === 'object' && 'content' in response) {
-      const chatResponse = response as { content: string }
+      const chatResponse = response as {
+        content: string
+        model?: string
+        agentId?: number
+        systemPrompt?: string
+        temperature?: number
+        conversationId?: string | number
+      }
+
+      if (chatResponse.conversationId && currentConversation.value) {
+        currentConversation.value.id = String(chatResponse.conversationId)
+      }
+
+      if (currentConversation.value) {
+        currentConversation.value.modelId = chatResponse.model || currentModel.value.id
+        chatStore.setConversationRuntimeConfig(currentConversation.value.id, {
+          modelId: chatResponse.model || currentModel.value.id,
+          agentId: chatResponse.agentId != null ? String(chatResponse.agentId) : undefined,
+          systemPrompt: chatResponse.systemPrompt,
+          temperature: chatResponse.temperature,
+        })
+      }
+
       addMessage(chatResponse.content, 'assistant')
+
+      if (currentConversation.value) {
+        upsertConversation(currentConversation.value)
+      }
     } else if (typeof response === 'string') {
       addMessage(response, 'assistant')
     } else {
       throw new Error('Invalid response format')
     }
+
     await scrollToBottom()
   } catch (error) {
-    ElMessage.error('发送消息失败，请检查网络连接')
+    ElMessage.error(resolveErrorMessage(error, '发送消息失败，请检查网络连接'))
     console.error('Send message error:', error)
   } finally {
     isLoading.value = false
@@ -208,10 +439,8 @@ const sendMessage = async (message: string) => {
 const regenerateMessage = async () => {
   if (!currentConversation.value || currentConversation.value.messages.length < 2) return
 
-  // 移除最后一条AI消息
   currentConversation.value.messages.pop()
-  
-  // 获取最后一条用户消息
+
   const lastUserMessage = currentConversation.value.messages
     .slice()
     .reverse()
@@ -222,10 +451,26 @@ const regenerateMessage = async () => {
   }
 }
 
-onMounted(() => {
-  // 如果已经有演示数据，不需要创建新对话
-  if (conversations.value.length === 0) {
+onMounted(async () => {
+  try {
+    await loadModels()
+    await loadAgents()
+    const firstConversation = await loadConversations()
+
+    if (firstConversation) {
+      await loadConversationDetail(firstConversation.id)
+      await scrollToBottom()
+      return
+    }
+
     createConversation()
+  } catch (error) {
+    ElMessage.error('加载对话历史失败')
+    console.error('Load conversations error:', error)
+
+    if (conversations.value.length === 0) {
+      createConversation()
+    }
   }
 })
 </script>
@@ -277,6 +522,8 @@ onMounted(() => {
   align-items: center;
   gap: 15px;
   position: relative;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .control-btn {
@@ -301,6 +548,24 @@ onMounted(() => {
 
 .control-btn i {
   font-size: 14px;
+}
+
+.control-btn.subtle {
+  background: rgba(255,255,255,0.04);
+  border-color: rgba(255,255,255,0.08);
+}
+
+.control-btn.subtle i {
+  color: var(--text-secondary);
+}
+
+.control-btn.admin-entry {
+  background: rgba(234, 179, 8, 0.1);
+  border-color: rgba(234, 179, 8, 0.24);
+}
+
+.control-btn.admin-entry i {
+  color: #facc15;
 }
 
 .chat-messages {

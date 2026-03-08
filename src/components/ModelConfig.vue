@@ -1,58 +1,78 @@
 <template>
-  <!-- 模态框遮罩 -->
   <div class="modal-overlay" :class="{ show: modelValue }" @click.self="closeModal">
     <div class="holo-modal">
       <div class="modal-header">
         <div class="modal-title">
-          <i class="fa-solid fa-bolt"></i> 模型配置
+          <i class="fa-solid fa-sliders"></i>
+          <span>当前会话运行时</span>
         </div>
         <i class="fa-solid fa-xmark close-modal" @click="closeModal"></i>
       </div>
-      
+
       <div class="modal-body">
         <div class="modal-content-area">
-          <!-- 模型选择 -->
-          <div class="form-group">
-            <label class="form-label">选择模型</label>
-            <select class="form-input" v-model="selectedModelId" @change="handleModelChange">
-              <option v-for="model in models" :key="model.id" :value="model.id">
-                {{ model.name }} ({{ model.provider }})
-              </option>
-            </select>
+          <div class="config-grid">
+            <div class="form-group">
+              <label class="form-label">智能体</label>
+              <select class="form-input" v-model="draft.agentId">
+                <option value="">不使用智能体</option>
+                <optgroup v-if="officialAgents.length" label="官方预设">
+                  <option v-for="agent in officialAgents" :key="agent.id" :value="agent.id">
+                    {{ agent.name }}
+                  </option>
+                </optgroup>
+                <optgroup v-if="privateAgents.length" label="我的智能体">
+                  <option v-for="agent in privateAgents" :key="agent.id" :value="agent.id">
+                    {{ agent.name }}
+                  </option>
+                </optgroup>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">模型</label>
+              <select class="form-input" v-model="draft.modelId">
+                <option v-for="model in models" :key="model.id" :value="model.id">
+                  {{ model.name }}（{{ model.provider }}）
+                </option>
+              </select>
+            </div>
           </div>
 
-          <!-- 系统提示词 -->
+          <div class="config-grid">
+            <div class="form-group">
+              <label class="form-label">Temperature</label>
+              <input class="range-input" type="range" min="0" max="2" step="0.1" v-model="draft.temperature" />
+              <div class="range-value">{{ Number(draft.temperature).toFixed(1) }}</div>
+            </div>
+
+            <div class="agent-preview" v-if="selectedAgent">
+              <span class="preview-label">智能体说明</span>
+              <strong>{{ selectedAgent.name }}</strong>
+              <p>{{ selectedAgent.description || '该智能体未填写说明。' }}</p>
+            </div>
+          </div>
+
           <div class="system-prompt-section">
             <div class="system-prompt-label">
               <i class="fa-solid fa-circle-info"></i>
-              系统提示词（当前对话有效）
+              <span>系统提示词（当前会话有效）</span>
             </div>
-            <textarea 
-              class="form-textarea" 
-              v-model="systemPrompt"
-              placeholder="例如：你是一个专业的编程助手，擅长代码审查和架构设计..."
+            <textarea
+              class="form-textarea"
+              v-model="draft.systemPrompt"
+              placeholder="例如：你是一个专注代码审查与架构建议的技术助手。"
             ></textarea>
           </div>
 
-          <!-- API 配置（可选） -->
-          <div class="api-config-section" v-if="currentModel">
-            <div class="form-group">
-              <label class="form-label">API 密钥（可选）</label>
-              <input 
-                type="password" 
-                class="form-input" 
-                v-model="apiKey"
-                placeholder="sk-..."
-              />
+          <div class="runtime-summary">
+            <div class="summary-row">
+              <span>当前生效模型</span>
+              <strong>{{ selectedModelName }}</strong>
             </div>
-            <div class="form-group">
-              <label class="form-label">API 基础地址（可选）</label>
-              <input 
-                type="text" 
-                class="form-input" 
-                v-model="baseUrl"
-                placeholder="https://api.example.com"
-              />
+            <div class="summary-row">
+              <span>当前生效智能体</span>
+              <strong>{{ selectedAgent?.name || '无' }}</strong>
             </div>
           </div>
 
@@ -67,58 +87,74 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { computed, reactive, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import type { AIModel } from '@/composables/useChatStore'
+import type { AIModel, AgentDefinition, RuntimeConfigValues } from '@/composables/useChatStore'
 
 const props = defineProps<{
   modelValue: boolean
   models: AIModel[]
   currentModel: AIModel
+  officialAgents: AgentDefinition[]
+  privateAgents: AgentDefinition[]
+  runtimeConfig: RuntimeConfigValues
 }>()
 
 const emit = defineEmits<{
   'update:modelValue': [value: boolean]
-  'switchModel': [modelId: string]
-  'updateModel': [modelId: string, config: Partial<AIModel>]
+  applyRuntime: [config: RuntimeConfigValues]
 }>()
 
-const selectedModelId = ref(props.currentModel.id)
-const systemPrompt = ref('你是一个专业的 AI 助手，擅长代码分析、技术写作和问题解决。请用清晰、专业的语言回答用户的问题。')
-const apiKey = ref('')
-const baseUrl = ref('')
-
-const currentModel = computed(() => {
-  return props.models.find(m => m.id === selectedModelId.value) || props.currentModel
+const draft = reactive<Required<RuntimeConfigValues>>({
+  modelId: props.runtimeConfig.modelId || props.currentModel.id,
+  agentId: props.runtimeConfig.agentId || '',
+  systemPrompt: props.runtimeConfig.systemPrompt || '',
+  temperature: props.runtimeConfig.temperature ?? props.currentModel.temperature ?? 0.7,
 })
 
-watch(() => props.currentModel, (newModel) => {
-  selectedModelId.value = newModel.id
+const allAgents = computed(() => [...props.officialAgents, ...props.privateAgents])
+
+const selectedAgent = computed(() => allAgents.value.find(agent => agent.id === draft.agentId) || null)
+const selectedModelName = computed(() => props.models.find(model => model.id === draft.modelId)?.name || props.currentModel.name)
+
+watch(() => props.modelValue, (visible) => {
+  if (!visible) return
+  draft.modelId = props.runtimeConfig.modelId || props.currentModel.id
+  draft.agentId = props.runtimeConfig.agentId || ''
+  draft.systemPrompt = props.runtimeConfig.systemPrompt || ''
+  draft.temperature = props.runtimeConfig.temperature ?? props.currentModel.temperature ?? 0.7
 })
 
-const handleModelChange = () => {
-  // 切换模型时更新配置
-}
+watch(selectedAgent, (agent) => {
+  if (!agent) return
+  if (!draft.systemPrompt && agent.systemPrompt) {
+    draft.systemPrompt = agent.systemPrompt
+  }
+  if ((!draft.modelId || draft.modelId === props.currentModel.id) && agent.modelId) {
+    draft.modelId = agent.modelId
+  }
+  if (agent.temperature != null) {
+    draft.temperature = agent.temperature
+  }
+})
 
 const closeModal = () => {
   emit('update:modelValue', false)
 }
 
 const saveConfig = () => {
-  // 切换模型
-  if (selectedModelId.value !== props.currentModel.id) {
-    emit('switchModel', selectedModelId.value)
+  if (!draft.modelId) {
+    ElMessage.warning('请选择模型')
+    return
   }
-  
-  // 更新API配置
-  if (apiKey.value || baseUrl.value) {
-    emit('updateModel', selectedModelId.value, {
-      apiKey: apiKey.value,
-      baseUrl: baseUrl.value
-    })
-  }
-  
-  ElMessage.success('配置已保存')
+
+  emit('applyRuntime', {
+    modelId: draft.modelId,
+    agentId: draft.agentId || undefined,
+    systemPrompt: draft.systemPrompt,
+    temperature: Number(draft.temperature),
+  })
+  ElMessage.success('当前会话配置已更新')
   closeModal()
 }
 </script>
@@ -126,10 +162,7 @@ const saveConfig = () => {
 <style scoped>
 .modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   background: rgba(0,0,0,0.7);
   backdrop-filter: blur(5px);
   z-index: 100;
@@ -147,9 +180,9 @@ const saveConfig = () => {
 }
 
 .holo-modal {
-  width: 900px;
-  height: 600px;
-  max-height: 85vh;
+  width: 880px;
+  max-width: 94vw;
+  max-height: 88vh;
   background: rgba(24, 24, 27, 0.95);
   backdrop-filter: blur(20px);
   border: 1px solid var(--glass-border);
@@ -185,18 +218,13 @@ const saveConfig = () => {
 }
 
 .modal-title i {
-  color: #eab308;
+  color: var(--accent-primary);
 }
 
 .close-modal {
   cursor: pointer;
   color: var(--text-muted);
   font-size: 20px;
-  transition: color 0.2s;
-}
-
-.close-modal:hover {
-  color: white;
 }
 
 .modal-body {
@@ -206,24 +234,37 @@ const saveConfig = () => {
 }
 
 .modal-content-area {
-  padding: 25px;
+  padding: 24px;
 }
 
-.form-group {
+.config-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
   margin-bottom: 20px;
 }
 
-.form-label {
-  display: block;
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-label,
+.preview-label {
   font-size: 12px;
   color: var(--text-secondary);
-  margin-bottom: 8px;
-  font-weight: 500;
+  font-weight: 600;
+}
+
+.form-input,
+.form-textarea,
+.range-input {
+  width: 100%;
 }
 
 .form-input,
 .form-textarea {
-  width: 100%;
   padding: 12px;
   background: rgba(0,0,0,0.3);
   border: 1px solid var(--glass-border);
@@ -231,31 +272,40 @@ const saveConfig = () => {
   color: white;
   font-family: 'Inter', sans-serif;
   font-size: 14px;
-  transition: border-color 0.2s;
-}
-
-.form-input:focus,
-.form-textarea:focus {
-  border-color: var(--accent-primary);
-  outline: none;
-}
-
-.form-input option {
-  background: #18181b;
-  color: white;
 }
 
 .form-textarea {
   resize: vertical;
-  min-height: 200px;
-  font-family: 'Inter', sans-serif;
+  min-height: 180px;
   line-height: 1.6;
 }
 
+.agent-preview,
+.runtime-summary,
 .system-prompt-section {
   background: rgba(255,255,255,0.03);
   border: 1px solid var(--glass-border);
   border-radius: 12px;
+}
+
+.agent-preview {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.agent-preview strong {
+  color: var(--text-primary);
+}
+
+.agent-preview p,
+.range-value,
+.runtime-summary span {
+  color: var(--text-secondary);
+}
+
+.system-prompt-section {
   padding: 20px;
   margin-bottom: 20px;
 }
@@ -270,12 +320,20 @@ const saveConfig = () => {
   gap: 8px;
 }
 
-.system-prompt-label i {
-  color: var(--accent-primary);
+.runtime-summary {
+  padding: 16px 20px;
+  display: grid;
+  gap: 12px;
 }
 
-.api-config-section {
-  margin-top: 20px;
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.summary-row strong {
+  color: var(--text-primary);
 }
 
 .modal-footer {
@@ -292,9 +350,6 @@ const saveConfig = () => {
   border: none;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
-  font-family: 'Inter', sans-serif;
-  font-size: 14px;
 }
 
 .save-btn {
@@ -302,24 +357,14 @@ const saveConfig = () => {
   color: #062e6f;
 }
 
-.save-btn:hover {
-  background: var(--accent-hover);
-  transform: scale(1.02);
-}
-
 .confirm-btn.cancel {
   background: rgba(255,255,255,0.05);
   color: var(--text-primary);
 }
 
-.confirm-btn.cancel:hover {
-  background: rgba(255,255,255,0.1);
-}
-
 @media (max-width: 768px) {
-  .holo-modal {
-    width: 95%;
-    max-height: 90vh;
+  .config-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>
