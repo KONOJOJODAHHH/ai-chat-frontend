@@ -2,9 +2,8 @@
   <section class="settings-page glass-card">
     <header class="page-header">
       <div>
-        <p class="eyebrow">STATS</p>
         <h2>数据统计</h2>
-        <p>这里展示后端真实聚合结果，刷新页面后仍保持一致，不依赖前端本地 store。</p>
+        <p>展示个人使用概况与趋势分析，数据来自服务器实时聚合。</p>
       </div>
       <button class="refresh-btn" :disabled="loading" @click="load">
         <i class="fa-solid fa-rotate-right" :class="{ spinning: loading }"></i>
@@ -60,7 +59,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { chatAPI, type DistributionItem, type StatsTrendItem, type UserStatsResponse } from '@/utils/api'
+import { chatAPI, type DistributionItem, type UserStatsResponse } from '@/utils/api'
 
 const loading = ref(false)
 const stats = ref<UserStatsResponse | null>(null)
@@ -98,17 +97,16 @@ onMounted(load)
 </script>
 
 <style scoped>
-.settings-page { min-height: calc(100vh - 40px); padding: 32px; }
+.settings-page { min-height: 100%; box-sizing: border-box; padding: 20px; }
 .page-header { margin-bottom: 28px; display: flex; justify-content: space-between; gap: 20px; align-items: flex-start; }
-.eyebrow { margin: 0 0 10px; font-size: 11px; letter-spacing: 0.24em; color: var(--text-secondary); }
-h2 { margin: 0 0 12px; font-size: 30px; }
+h2 { margin: 0 0 12px; font-size: 26px; font-weight: 700; }
 p { margin: 0; color: var(--text-secondary); line-height: 1.7; }
-.stats-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.stats-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
 .stat-card { padding: 24px; border-radius: 20px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.04); display: flex; flex-direction: column; gap: 10px; }
 .stat-card strong { font-size: 24px; color: var(--text-primary); }
 .stat-card small { color: var(--text-secondary); line-height: 1.7; }
 .refresh-btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border: none; border-radius: 10px; background: var(--accent-primary); color: #0a0a0a; cursor: pointer; font-weight: 600; }
-.charts-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
+.charts-grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin-top: 16px; }
 .chart-card { padding: 24px; border-radius: 20px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.04); }
 .chart-header { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 16px; }
 .chart-header h3 { margin: 0; }

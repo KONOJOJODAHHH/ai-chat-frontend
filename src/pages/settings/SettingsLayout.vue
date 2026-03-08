@@ -3,8 +3,7 @@
     <aside class="settings-sidebar glass-card">
       <div class="settings-brand">
         <div>
-          <p class="eyebrow">SETTINGS CENTER</p>
-          <h1>系统设置中心</h1>
+          <h1>系统设置</h1>
         </div>
         <router-link to="/" class="nav-chip primary">
           <i class="fa-solid fa-comments"></i>
@@ -56,11 +55,11 @@ const route = useRoute()
 const auth = useAuthStore()
 
 const navItems = [
-  { path: '/settings/general', label: '通用设置', hint: '主题、界面与默认偏好入口', icon: 'fa-solid fa-sliders' },
-  { path: '/settings/account', label: '账号管理', hint: '资料维护与密码安全', icon: 'fa-solid fa-user-gear' },
-  { path: '/settings/stats', label: '数据统计', hint: '个人使用概览与后续真实指标入口', icon: 'fa-solid fa-chart-line' },
-  { path: '/settings/models', label: '模型服务', hint: '默认模型与服务偏好骨架', icon: 'fa-solid fa-microchip' },
-  { path: '/settings/agents', label: '智能体', hint: '官方与个人智能体容器', icon: 'fa-solid fa-sparkles' },
+  { path: '/settings/general', label: '通用设置', hint: '主题、界面与快捷键偏好', icon: 'fa-solid fa-sliders' },
+  { path: '/settings/account', label: '账号管理', hint: '资料维护与密码修改', icon: 'fa-solid fa-user-gear' },
+  { path: '/settings/stats', label: '数据统计', hint: '个人使用概览与趋势分析', icon: 'fa-solid fa-chart-line' },
+  { path: '/settings/models', label: '模型服务', hint: '默认模型与运行时配置', icon: 'fa-solid fa-microchip' },
+  { path: '/settings/agents', label: '智能体', hint: '官方预设与我的智能体', icon: 'fa-solid fa-sparkles' },
 ]
 
 const isActive = (path: string) => route.path === path || route.path.startsWith(`${path}/`)
@@ -68,18 +67,33 @@ const isActive = (path: string) => route.path === path || route.path.startsWith(
 
 <style scoped>
 .settings-shell {
-  min-height: 100vh;
-  display: grid;
-  grid-template-columns: 320px minmax(0, 1fr);
+  height: 100vh;
+  width: 100vw;
+  box-sizing: border-box;
+  display: flex;
   gap: 20px;
   padding: 20px;
+  overflow: hidden;
 }
 
 .settings-sidebar {
+  width: 260px;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
   gap: 20px;
   padding: 24px;
+  height: 100%;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+.settings-sidebar::-webkit-scrollbar {
+  display: none;
+}
+.settings-sidebar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 .settings-brand {
@@ -97,8 +111,9 @@ const isActive = (path: string) => route.path === path || route.path.startsWith(
 
 .settings-brand h1 {
   margin: 0;
-  font-size: 30px;
+  font-size: 26px;
   line-height: 1.1;
+  font-weight: 700;
 }
 
 .settings-nav {
@@ -197,11 +212,40 @@ const isActive = (path: string) => route.path === path || route.path.startsWith(
 
 .settings-main {
   min-width: 0;
+  height: 100%;
+  box-sizing: border-box;
+  overflow-y: auto;
+  padding-right: 8px; /* Breathing room for scrollbar */
+}
+
+/* Elegant scrollbar for main panel */
+.settings-main::-webkit-scrollbar {
+  width: 6px;
+}
+.settings-main::-webkit-scrollbar-track {
+  background: transparent;
+}
+.settings-main::-webkit-scrollbar-thumb {
+  background: var(--glass-border);
+  border-radius: 10px;
+}
+.settings-main::-webkit-scrollbar-thumb:hover {
+  background: rgba(168, 199, 250, 0.2);
 }
 
 @media (max-width: 980px) {
   .settings-shell {
-    grid-template-columns: 1fr;
+    flex-direction: column;
+    height: auto;
+    overflow: visible;
+    padding: 10px;
+  }
+  .settings-sidebar {
+    width: 100%;
+  }
+  .settings-sidebar, .settings-main {
+    height: auto;
+    overflow: visible;
   }
 }
 </style>

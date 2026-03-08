@@ -1,10 +1,10 @@
 <template>
   <section class="settings-page glass-card">
     <div class="hero-block">
-      <p class="eyebrow">MODULE A DELIVERY</p>
-      <h2>设置中心路由骨架已稳定</h2>
+      <h2>欢迎来到设置中心</h2>
       <p>
-        这里是后续模块的承接页：统一配置、页面化设置入口、管理员切换路径已经固定，后续只在这些分区内补充真实能力。
+        在这里你可以调整主题外观、管理账号信息、查看使用统计，以及配置 AI 模型与智能体偏好。
+        请从左侧导航选择对应功能。
       </p>
     </div>
   </section>
@@ -12,29 +12,27 @@
 
 <style scoped>
 .settings-page {
-  min-height: calc(100vh - 40px);
-  padding: 32px;
+  min-height: 100%; box-sizing: border-box;
+  padding: 20px;
+  display: flex;
+  align-items: center;
 }
 
 .hero-block {
-  max-width: 720px;
-}
-
-.eyebrow {
-  margin: 0 0 12px;
-  font-size: 11px;
-  letter-spacing: 0.24em;
-  color: var(--text-secondary);
+  max-width: 600px;
 }
 
 h2 {
   margin: 0 0 16px;
-  font-size: 32px;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
 }
 
 p {
   margin: 0;
   line-height: 1.8;
   color: var(--text-secondary);
+  font-size: 15px;
 }
 </style>

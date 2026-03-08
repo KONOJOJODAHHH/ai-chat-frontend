@@ -2,9 +2,8 @@
   <section class="settings-page glass-card">
     <header class="page-header">
       <div>
-        <p class="eyebrow">ACCOUNT</p>
         <h2>账号管理</h2>
-        <p>原设置弹窗里的资料维护和密码修改已经迁入页面化设置中心，功能保持可用。</p>
+        <p>维护个人资料与登录密码，所有修改将实时生效。</p>
       </div>
     </header>
 
@@ -12,17 +11,17 @@
       <article class="account-panel">
         <div class="panel-header">
           <h3>个人资料</h3>
-          <span>直接调用现有账号接口</span>
+          <span>展示与修改基本信息</span>
         </div>
 
         <div class="form-group">
           <label>用户名</label>
-          <input class="form-input readonly" :value="auth.user.value?.username || ''" disabled />
+          <input class="form-input glass-input" :value="auth.user.value?.username || ''" disabled />
         </div>
 
         <div class="form-group">
           <label>昵称</label>
-          <input class="form-input" v-model="profileForm.nickname" placeholder="设置昵称" />
+          <input class="form-input glass-input" v-model="profileForm.nickname" placeholder="设置昵称" />
         </div>
 
         <button class="primary-btn" :disabled="profileSaving" @click="updateProfile">
@@ -34,22 +33,22 @@
       <article class="account-panel">
         <div class="panel-header">
           <h3>修改密码</h3>
-          <span>沿用现有密码校验逻辑</span>
+          <span>安全更新登录凭证</span>
         </div>
 
         <div class="form-group">
           <label>原密码</label>
-          <input class="form-input" v-model="passwordForm.oldPassword" type="password" placeholder="请输入原密码" />
+          <input class="form-input glass-input" v-model="passwordForm.oldPassword" type="password" placeholder="请输入原密码" />
         </div>
 
         <div class="form-group">
           <label>新密码</label>
-          <input class="form-input" v-model="passwordForm.newPassword" type="password" placeholder="请输入新密码" />
+          <input class="form-input glass-input" v-model="passwordForm.newPassword" type="password" placeholder="请输入新密码" />
         </div>
 
         <div class="form-group">
           <label>确认密码</label>
-          <input class="form-input" v-model="passwordForm.confirmPassword" type="password" placeholder="再次输入新密码" />
+          <input class="form-input glass-input" v-model="passwordForm.confirmPassword" type="password" placeholder="再次输入新密码" />
         </div>
 
         <button class="primary-btn" :disabled="passwordSaving" @click="changePassword">
@@ -146,19 +145,18 @@ const changePassword = async () => {
 </script>
 
 <style scoped>
-.settings-page { min-height: calc(100vh - 40px); padding: 32px; }
+.settings-page { min-height: 100%; box-sizing: border-box; padding: 20px; }
 .page-header { margin-bottom: 28px; }
-.eyebrow { margin: 0 0 10px; font-size: 11px; letter-spacing: 0.24em; color: var(--text-secondary); }
-h2 { margin: 0 0 12px; font-size: 30px; }
+h2 { margin: 0 0 12px; font-size: 26px; font-weight: 700; }
 .page-header p { margin: 0; color: var(--text-secondary); line-height: 1.7; }
-.account-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.account-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
 .account-panel { padding: 24px; border-radius: 20px; background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border); display: flex; flex-direction: column; gap: 16px; }
 .panel-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 4px; }
 .panel-header h3 { margin: 0; }
 .panel-header span { font-size: 12px; color: var(--text-secondary); }
 .form-group { display: flex; flex-direction: column; gap: 8px; }
 .form-group label { color: var(--text-secondary); font-size: 14px; }
-.form-input { width: 100%; min-height: 46px; padding: 0 14px; border-radius: 14px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.03); color: var(--text-primary); }
+.form-input { width: 100%; min-height: 46px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.3); color: var(--text-primary); font-family: 'Inter', sans-serif; font-size: 14px; outline: none; transition: border-color 0.2s; }
 .form-input.readonly { opacity: 0.7; }
 .primary-btn { min-height: 48px; border-radius: 14px; border: 1px solid rgba(168, 199, 250, 0.2); background: rgba(168, 199, 250, 0.12); color: var(--accent-primary); display: inline-flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; }
 .primary-btn:disabled { opacity: 0.65; cursor: wait; }

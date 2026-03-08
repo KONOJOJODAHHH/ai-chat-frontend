@@ -4,7 +4,7 @@
       <div class="modal-header">
         <div class="modal-title">
           <i class="fa-solid fa-sliders"></i>
-          <span>当前会话运行时</span>
+          <span>会话模型配置</span>
         </div>
         <i class="fa-solid fa-xmark close-modal" @click="closeModal"></i>
       </div>
@@ -14,35 +14,29 @@
           <div class="config-grid">
             <div class="form-group">
               <label class="form-label">智能体</label>
-              <select class="form-input" v-model="draft.agentId">
-                <option value="">不使用智能体</option>
-                <optgroup v-if="officialAgents.length" label="官方预设">
-                  <option v-for="agent in officialAgents" :key="agent.id" :value="agent.id">
-                    {{ agent.name }}
-                  </option>
-                </optgroup>
-                <optgroup v-if="privateAgents.length" label="我的智能体">
-                  <option v-for="agent in privateAgents" :key="agent.id" :value="agent.id">
-                    {{ agent.name }}
-                  </option>
-                </optgroup>
-              </select>
+              <el-select v-model="draft.agentId" placeholder="选择智能体" class="glass-select" popper-class="glass-dropdown">
+                <el-option label="不使用智能体" value="" />
+                <el-option-group v-if="officialAgents.length" label="官方预设">
+                  <el-option v-for="agent in officialAgents" :key="agent.id" :label="agent.name" :value="agent.id" />
+                </el-option-group>
+                <el-option-group v-if="privateAgents.length" label="我的智能体">
+                  <el-option v-for="agent in privateAgents" :key="agent.id" :label="agent.name" :value="agent.id" />
+                </el-option-group>
+              </el-select>
             </div>
 
             <div class="form-group">
               <label class="form-label">模型</label>
-              <select class="form-input" v-model="draft.modelId">
-                <option v-for="model in models" :key="model.id" :value="model.id">
-                  {{ model.name }}（{{ model.provider }}）
-                </option>
-              </select>
+              <el-select v-model="draft.modelId" placeholder="选择模型" class="glass-select" popper-class="glass-dropdown">
+                <el-option v-for="model in models" :key="model.id" :label="`${model.name}（${model.provider}）`" :value="model.id" />
+              </el-select>
             </div>
           </div>
 
           <div class="config-grid">
             <div class="form-group">
-              <label class="form-label">Temperature</label>
-              <input class="range-input" type="range" min="0" max="2" step="0.1" v-model="draft.temperature" />
+              <label class="form-label">回答发散度</label>
+              <input class="range-input glass-range" type="range" min="0" max="2" step="0.1" v-model="draft.temperature" />
               <div class="range-value">{{ Number(draft.temperature).toFixed(1) }}</div>
             </div>
 
@@ -180,7 +174,7 @@ const saveConfig = () => {
 }
 
 .holo-modal {
-  width: 880px;
+  width: 650px;
   max-width: 94vw;
   max-height: 88vh;
   background: rgba(24, 24, 27, 0.95);
@@ -208,7 +202,6 @@ const saveConfig = () => {
 }
 
 .modal-title {
-  font-family: 'Orbitron';
   font-size: 18px;
   color: white;
   font-weight: 600;
@@ -261,6 +254,10 @@ const saveConfig = () => {
 .form-textarea,
 .range-input {
   width: 100%;
+}
+
+.range-input {
+  margin-top: 4px;
 }
 
 .form-input,

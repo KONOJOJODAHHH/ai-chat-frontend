@@ -2,9 +2,8 @@
   <section class="settings-page glass-card">
     <header class="page-header">
       <div>
-        <p class="eyebrow">GENERAL</p>
         <h2>通用设置</h2>
-        <p>这里承接主题、界面偏好与默认行为设置。当前配置都会立即写入本地持久化并反映到前端体验中。</p>
+        <p>调整主题风格、界面布局与快捷键偏好，所有改动将立即生效。</p>
       </div>
     </header>
 
@@ -102,12 +101,11 @@ const updatePreference = <TKey extends keyof UserPreferenceState>(key: TKey, val
 </script>
 
 <style scoped>
-.settings-page { min-height: calc(100vh - 40px); padding: 32px; }
+.settings-page { min-height: 100%; box-sizing: border-box; padding: 20px; }
 .page-header { margin-bottom: 28px; }
-.eyebrow { margin: 0 0 10px; font-size: 11px; letter-spacing: 0.24em; color: var(--text-secondary); }
-h2 { margin: 0 0 12px; font-size: 30px; }
+h2 { margin: 0 0 12px; font-size: 26px; font-weight: 700; }
 .page-header p { margin: 0; color: var(--text-secondary); line-height: 1.7; }
-.section-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.section-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
 .settings-card { padding: 24px; border-radius: 20px; background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border); display: flex; flex-direction: column; gap: 18px; }
 .settings-card.full-width { grid-column: 1 / -1; }
 .section-title { display: flex; align-items: center; justify-content: space-between; gap: 12px; }

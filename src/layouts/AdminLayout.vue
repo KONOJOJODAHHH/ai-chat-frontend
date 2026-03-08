@@ -67,19 +67,19 @@ const isActive = (path: string) => route.path === path || route.path.startsWith(
 .admin-layout {
   display: flex;
   height: 100vh;
+  width: 100vw;
+  box-sizing: border-box;
+  padding: 20px;
+  gap: 20px;
   background: var(--bg-color);
   position: relative;
 }
 
 .admin-sidebar {
   width: 260px;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  border-right: 1px solid var(--glass-border);
-  backdrop-filter: blur(20px);
-  margin: 12px;
-  margin-right: 0;
-  border-radius: 16px 0 0 16px;
   overflow: hidden;
 }
 
@@ -205,8 +205,26 @@ const isActive = (path: string) => route.path === path || route.path.startsWith(
 .admin-content {
   flex: 1;
   overflow: auto;
-  padding: 24px;
-  margin: 12px 12px 12px 0;
+  padding: 0;
+  padding-right: 8px;
+  box-sizing: border-box;
+}
+
+.admin-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.admin-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-content::-webkit-scrollbar-thumb {
+  background: var(--glass-border);
+  border-radius: 10px;
+}
+
+.admin-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(168, 199, 250, 0.2);
 }
 
 .sidebar-nav::-webkit-scrollbar {

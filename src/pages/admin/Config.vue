@@ -108,8 +108,8 @@ onMounted(load)
 
 <style scoped>
 .admin-page {
-  max-width: 900px;
-  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .page-header,
