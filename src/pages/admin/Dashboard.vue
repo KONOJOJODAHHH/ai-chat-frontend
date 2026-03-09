@@ -3,10 +3,9 @@
     <div class="page-header glass-card">
       <div class="header-main">
         <div class="header-title">
-          <i class="fa-solid fa-chart-line"></i>
           <h1>仪表盘</h1>
         </div>
-        <button class="refresh-btn" :disabled="loading" @click="load">
+        <button class="refresh-btn matrix-btn" :disabled="loading" @click="load">
           <i class="fa-solid fa-rotate-right" :class="{ spinning: loading }"></i>
           <span>{{ loading ? '刷新中...' : '刷新' }}</span>
         </button>
@@ -14,12 +13,10 @@
 
       <div class="header-tags">
         <span class="tag-item">
-          <i class="fa-solid fa-user-plus"></i>
-          <span>今日新增用户：{{ dashboard.todayUsers }}</span>
+          <span>今日新增：{{ dashboard.todayUsers }}</span>
         </span>
         <span class="tag-item">
-          <i class="fa-solid fa-users-rays"></i>
-          <span>近 7 天活跃用户：{{ dashboard.activeUsers }}</span>
+          <span>近七天活跃：{{ dashboard.activeUsers }}</span>
         </span>
         <span v-if="error" class="tag-item tag-error">
           <i class="fa-solid fa-circle-exclamation"></i>
@@ -30,20 +27,18 @@
 
     <div class="stats-grid">
       <div v-for="card in statCards" :key="card.label" class="stat-card glass-card">
-        <div class="stat-icon" :style="{ background: card.bg }">
-          <i :class="card.icon" :style="{ color: card.color }"></i>
+        <div class="stat-header">
+          <span class="stat-label">{{ card.label }}</span>
+          <i :class="card.icon" class="stat-icon-small"></i>
         </div>
-        <div class="stat-content">
-          <div class="stat-label">{{ card.label }}</div>
-          <div class="stat-value">{{ card.value }}</div>
-        </div>
+        <div class="stat-value">{{ card.value }}</div>
       </div>
     </div>
 
     <div class="content-grid">
       <section class="chart-card glass-card">
         <div class="section-header">
-          <h2>模型调用</h2>
+          <h2>模型调用分布</h2>
         </div>
 
         <div v-if="dashboard.modelCalls.length" class="chart-body">
@@ -65,35 +60,35 @@
 
       <section class="summary-card glass-card">
         <div class="section-header">
-          <h2>概览</h2>
+          <h2>系统概览</h2>
         </div>
         <div class="summary-list">
           <div class="summary-item">
-            <span>用户总数</span>
-            <strong>{{ dashboard.users }}</strong>
+            <span class="summary-label">用户总数</span>
+            <span class="summary-value">{{ dashboard.users }}</span>
           </div>
           <div class="summary-item">
-            <span>会话总数</span>
-            <strong>{{ dashboard.sessions }}</strong>
+            <span class="summary-label">会话总数</span>
+            <span class="summary-value">{{ dashboard.sessions }}</span>
           </div>
           <div class="summary-item">
-            <span>消息总量</span>
-            <strong>{{ dashboard.messages }}</strong>
+            <span class="summary-label">消息总量</span>
+            <span class="summary-value">{{ dashboard.messages }}</span>
           </div>
           <div class="summary-item">
-            <span>失败调用数</span>
-            <strong>{{ dashboard.failureCount }}</strong>
+            <span class="summary-label">失败调用数</span>
+            <span class="summary-value">{{ dashboard.failureCount }}</span>
           </div>
           <div class="summary-item">
-            <span>平均响应耗时</span>
-            <strong>{{ dashboard.averageDuration }} ms</strong>
+            <span class="summary-label">平均响应耗时</span>
+            <span class="summary-value">{{ dashboard.averageDuration }} ms</span>
           </div>
         </div>
       </section>
 
       <section class="summary-card glass-card">
         <div class="section-header">
-          <h2>智能体分布</h2>
+          <h2>智能体总览</h2>
         </div>
         <div v-if="dashboard.agentCalls.length" class="chart-body">
           <DonutChart :data="dashboard.agentCalls" />
@@ -138,26 +133,17 @@ const dashboard = ref<DashboardState>({
   failureCount: 0,
   averageDuration: 0,
 })
+
 const loading = ref(false)
 const error = ref('')
 
 const statCards = computed(() => [
-  { label: '用户总数', value: dashboard.value.users, icon: 'fa-solid fa-users', color: '#3b82f6', bg: 'rgba(59, 130, 246, 0.1)' },
-  { label: '活跃用户', value: dashboard.value.activeUsers, icon: 'fa-solid fa-users-rays', color: '#8b5cf6', bg: 'rgba(139, 92, 246, 0.1)' },
-  { label: '会话总数', value: dashboard.value.sessions, icon: 'fa-solid fa-comments', color: 'var(--accent-primary)', bg: 'rgba(168, 199, 250, 0.1)' },
-  { label: '消息总量', value: dashboard.value.messages, icon: 'fa-solid fa-message', color: '#22c55e', bg: 'rgba(34, 197, 94, 0.1)' },
-  { label: '失败次数', value: dashboard.value.failureCount, icon: 'fa-solid fa-triangle-exclamation', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.1)' },
+  { label: '用户总数', value: dashboard.value.users, icon: 'fa-solid fa-users' },
+  { label: '活跃用户', value: dashboard.value.activeUsers, icon: 'fa-solid fa-users-rays' },
+  { label: '会话总数', value: dashboard.value.sessions, icon: 'fa-solid fa-comments' },
+  { label: '消息总量', value: dashboard.value.messages, icon: 'fa-solid fa-message' },
+  { label: '失败次数', value: dashboard.value.failureCount, icon: 'fa-solid fa-triangle-exclamation' },
 ])
-
-const getProgress = (count: number) => {
-  const max = Math.max(...dashboard.value.modelCalls.map((item) => item.count), 1)
-  return `${Math.max(8, Math.round((count / max) * 100))}%`
-}
-
-const getTrendProgress = (count: number, items: Array<{ count: number }>) => {
-  const max = Math.max(...items.map((item) => item.count), 1)
-  return `${Math.max(8, Math.round((count / max) * 100))}%`
-}
 
 const load = async () => {
   loading.value = true
@@ -197,34 +183,15 @@ onMounted(load)
   box-sizing: border-box;
 }
 
-.page-header,
-.stat-card,
-.chart-card,
-.summary-card {
-  border-radius: 16px;
-}
-
 .page-header {
-  padding: 24px;
+  padding: 24px 32px;
   margin-bottom: 24px;
 }
 
 .header-main {
   display: flex;
   justify-content: space-between;
-  gap: 20px;
   align-items: center;
-}
-
-.header-title {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.header-title i {
-  font-size: 30px;
-  color: var(--accent-primary);
 }
 
 .header-title h1 {
@@ -232,203 +199,157 @@ onMounted(load)
   color: var(--text-primary);
   font-size: var(--page-title-size);
   font-weight: var(--page-title-weight);
+  letter-spacing: -0.02em;
 }
 
 .header-tags {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
-  margin-top: 18px;
+  margin-top: 12px;
 }
 
 .tag-item {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--glass-border);
-  border-radius: 999px;
+  gap: 6px;
+  padding: 4px 10px;
+  background: var(--accent-subtle);
+  border-radius: 6px;
   color: var(--text-secondary);
   font-size: 13px;
+  font-weight: 500;
 }
 
 .tag-error {
-  color: #f87171;
-  border-color: rgba(248, 113, 113, 0.3);
-  background: rgba(248, 113, 113, 0.08);
-}
-
-.refresh-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  background: var(--accent-primary);
-  color: #0a0a0a;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  font-weight: 600;
-}
-
-.refresh-btn:disabled {
-  opacity: 0.7;
-  cursor: wait;
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
 }
 
 .spinning {
   animation: spin 1s linear infinite;
 }
-
-.stats-grid,
-.content-grid {
-  display: grid;
-  gap: 20px;
+@keyframes spin {
+  100% { transform: rotate(360deg); }
 }
 
 .stats-grid {
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
   margin-bottom: 24px;
 }
 
-.content-grid {
-  grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
-}
-
 .stat-card {
+  padding: 20px 24px;
   display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 24px;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.stat-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: 12px;
+.stat-header {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  justify-content: center;
-  font-size: 24px;
 }
 
 .stat-label {
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.stat-icon-small {
   color: var(--text-muted);
-  font-size: 13px;
-  margin-bottom: 4px;
+  font-size: 16px;
 }
 
 .stat-value {
   color: var(--text-primary);
-  font-size: 32px;
-  font-weight: 700;
+  font-size: 28px;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr);
+  gap: 24px;
 }
 
 .chart-card,
 .summary-card {
-  padding: 24px;
+  padding: 24px 32px;
+  display: flex;
+  flex-direction: column;
 }
 
 .section-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 20px;
-  padding-bottom: 14px;
+  margin-bottom: 24px;
+  padding-bottom: 12px;
   border-bottom: 1px solid var(--glass-border);
 }
 
 .section-header h2 {
   margin: 0;
   color: var(--text-primary);
-  font-size: 18px;
+  font-size: 16px;
+  font-weight: 600;
 }
 
 .chart-body {
-  display: grid;
-  gap: 16px;
-}
-
-.chart-label,
-.summary-item {
+  flex: 1;
   display: flex;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.chart-label {
-  margin-bottom: 8px;
-}
-
-.model-name {
-  color: var(--text-primary);
-}
-
-.model-count {
-  color: var(--text-muted);
-  font-variant-numeric: tabular-nums;
-}
-
-.progress-bar {
-  height: 12px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 999px;
-  overflow: hidden;
-  border: 1px solid var(--glass-border);
-}
-
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--accent-primary), var(--accent-hover));
-  border-radius: 999px;
-}
-
-.progress-fill.alt-fill {
-  background: linear-gradient(90deg, #22c55e, #86efac);
+  flex-direction: column;
 }
 
 .summary-list {
-  display: grid;
-  gap: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
 
 .summary-item {
-  padding: 14px 16px;
-  border: 1px solid var(--glass-border);
-  background: rgba(255, 255, 255, 0.04);
-  border-radius: 12px;
-  color: var(--text-secondary);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--glass-border);
+}
+.summary-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+.summary-item:first-child {
+  padding-top: 0;
 }
 
-.summary-item strong {
+.summary-label {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.summary-value {
   color: var(--text-primary);
-  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-size: 14px;
 }
 
 .empty-state {
-  padding: 48px 20px;
-  text-align: center;
   color: var(--text-muted);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-height: 120px;
 }
 
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-@media (max-width: 1100px) {
+@media (max-width: 1024px) {
   .content-grid {
     grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 768px) {
-  .header-main {
-    flex-direction: column;
-    align-items: flex-start;
   }
 }
 </style>

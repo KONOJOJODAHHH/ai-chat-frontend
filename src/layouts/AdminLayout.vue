@@ -1,18 +1,17 @@
 <template>
   <div class="admin-layout">
-    <aside class="admin-sidebar glass-card">
+    <aside class="admin-sidebar">
       <div class="sidebar-header">
         <div class="logo-area">
-          <i class="fa-solid fa-cube logo-icon"></i>
-          <span class="logo-text">MATRIX OS</span>
-        </div>
-        <div class="admin-badge">
-          <i class="fa-solid fa-shield-halved"></i>
-          <span>管理后台</span>
+          <div class="logo-icon-wrapper">
+            <i class="fa-solid fa-cube logo-icon"></i>
+          </div>
+          <span class="logo-text">管理控制台</span>
         </div>
       </div>
 
       <nav class="sidebar-nav">
+        <div class="nav-section-title">概览与管理</div>
         <router-link
           v-for="item in menuItems"
           :key="item.path"
@@ -26,21 +25,21 @@
       </nav>
 
       <div class="sidebar-footer">
-        <div class="switch-stack">
-          <router-link to="/" class="back-btn primary">
-            <i class="fa-solid fa-comments"></i>
-            <span>返回聊天</span>
-          </router-link>
-          <router-link to="/settings/general" class="back-btn">
-            <i class="fa-solid fa-sliders"></i>
-            <span>设置中心</span>
-          </router-link>
-        </div>
+        <router-link to="/" class="footer-btn primary-btn">
+          <i class="fa-solid fa-arrow-left"></i>
+          <span>返回应用</span>
+        </router-link>
+        <router-link to="/settings/general" class="footer-btn secondary-btn">
+          <i class="fa-solid fa-gear"></i>
+          <span>系统设置</span>
+        </router-link>
       </div>
     </aside>
 
     <main class="admin-content">
-      <router-view />
+      <div class="content-wrapper">
+        <router-view />
+      </div>
     </main>
   </div>
 </template>
@@ -55,8 +54,8 @@ const menuItems = [
   { path: '/admin/users', label: '用户管理', icon: 'fa-solid fa-users' },
   { path: '/admin/models', label: '模型管理', icon: 'fa-solid fa-microchip' },
   { path: '/admin/prompts', label: '官方预设', icon: 'fa-solid fa-wand-magic-sparkles' },
-  { path: '/admin/config', label: '系统配置', icon: 'fa-solid fa-gear' },
-  { path: '/admin/logs', label: '调用日志', icon: 'fa-solid fa-chart-pie' },
+  { path: '/admin/config', label: '系统配置', icon: 'fa-solid fa-sliders' },
+  { path: '/admin/logs', label: '日志审计', icon: 'fa-solid fa-list-check' },
 ]
 
 const isActive = (path: string) => route.path === path || route.path.startsWith(`${path}/`)
@@ -68,178 +67,187 @@ const isActive = (path: string) => route.path === path || route.path.startsWith(
   height: 100vh;
   width: 100vw;
   box-sizing: border-box;
-  padding: var(--app-shell-padding);
-  gap: var(--app-shell-gap);
   background: var(--bg-color);
-  position: relative;
-}
-
-.admin-sidebar {
-  width: var(--app-sidebar-width);
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
+  color: var(--text-primary);
+  font-family: inherit;
   overflow: hidden;
 }
 
+.admin-sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--glass-bg);
+  border-right: 1px solid var(--glass-border);
+  z-index: 10;
+}
+
 .sidebar-header {
-  padding: 24px 20px;
-  border-bottom: 1px solid var(--glass-border);
+  padding: 24px 20px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .logo-area {
   display: flex;
   align-items: center;
   gap: 12px;
-  font-family: 'Orbitron', sans-serif;
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  margin-bottom: 16px;
+}
+
+.logo-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: var(--text-primary);
+  border-radius: 8px;
+  color: var(--bg-color);
 }
 
 .logo-icon {
-  color: var(--accent-primary);
-  font-size: 24px;
+  font-size: 16px;
 }
 
 .logo-text {
-  background: linear-gradient(135deg, var(--accent-primary), var(--accent-hover));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.admin-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
-  background: rgba(168, 199, 250, 0.1);
-  border: 1px solid rgba(168, 199, 250, 0.2);
-  border-radius: 8px;
-  font-size: 12px;
-  color: var(--accent-primary);
-  font-weight: 500;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
 }
 
 .sidebar-nav {
   flex: 1;
-  padding: 12px;
+  padding: 16px 12px;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.nav-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 8px 12px 4px;
+  margin-bottom: 4px;
 }
 
 .nav-item {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 16px;
-  margin-bottom: 4px;
-  border-radius: 10px;
+  padding: 10px 12px;
+  border-radius: var(--border-radius-base);
   color: var(--text-secondary);
   text-decoration: none;
   font-size: 14px;
   font-weight: 500;
-  transition: all 0.2s var(--ease-out);
+  transition: all 0.15s ease;
   cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.nav-item:hover {
+  color: var(--text-primary);
+  background: var(--accent-subtle);
+}
+
+.nav-item.active {
+  color: var(--text-primary);
+  background: var(--accent-subtle);
+  font-weight: 600;
 }
 
 .nav-item i {
   width: 20px;
-  font-size: 16px;
+  font-size: 15px;
   text-align: center;
+  opacity: 0.8;
 }
 
-.nav-item:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--text-primary);
-}
-
-.nav-item.active {
-  background: var(--accent-subtle);
-  color: var(--accent-primary);
-  box-shadow: 0 0 20px rgba(168, 199, 250, 0.1);
+.nav-item.active i {
+  opacity: 1;
 }
 
 .sidebar-footer {
   padding: 16px;
   border-top: 1px solid var(--glass-border);
-}
-
-.switch-stack {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
-.back-btn {
+.footer-btn {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  width: 100%;
-  padding: 12px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--glass-border);
-  border-radius: 10px;
-  color: var(--text-secondary);
-  text-decoration: none;
-  font-size: 14px;
+  padding: 10px;
+  border-radius: var(--border-radius-base);
+  font-size: 13px;
   font-weight: 500;
-  transition: all 0.2s var(--ease-out);
+  text-decoration: none;
+  transition: all 0.15s;
+  cursor: pointer;
 }
 
-.back-btn.primary {
-  background: rgba(168, 199, 250, 0.12);
-  border-color: rgba(168, 199, 250, 0.24);
+.primary-btn {
+  background: var(--text-primary);
+  color: var(--bg-color);
+}
+
+.primary-btn:hover {
+  opacity: 0.9;
+}
+
+.secondary-btn {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--glass-border);
+}
+
+.secondary-btn:hover {
+  background: var(--accent-subtle);
   color: var(--text-primary);
-}
-
-.back-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--accent-primary);
-  border-color: var(--accent-primary);
 }
 
 .admin-content {
   flex: 1;
-  overflow: auto;
-  padding: 0;
-  padding-right: 8px;
-  box-sizing: border-box;
+  overflow-y: auto;
+  position: relative;
+  background: var(--bg-color);
 }
 
-.admin-content::-webkit-scrollbar {
-  width: 6px;
+.content-wrapper {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 40px;
 }
 
-.admin-content::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.admin-content::-webkit-scrollbar-thumb {
-  background: var(--glass-border);
-  border-radius: 10px;
-}
-
-.admin-content::-webkit-scrollbar-thumb:hover {
-  background: rgba(168, 199, 250, 0.2);
-}
-
-.sidebar-nav::-webkit-scrollbar {
-  width: 4px;
-}
-
-.sidebar-nav::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.sidebar-nav::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-}
-
-.sidebar-nav::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+@media (max-width: 768px) {
+  .admin-layout {
+    flex-direction: column;
+  }
+  .admin-sidebar {
+    width: 100%;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--glass-border);
+  }
+  .sidebar-nav {
+    flex-direction: row;
+    overflow-x: auto;
+  }
+  .nav-section-title, .sidebar-footer {
+    display: none;
+  }
+  .content-wrapper {
+    padding: 20px;
+  }
 }
 </style>
