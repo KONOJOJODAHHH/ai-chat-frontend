@@ -81,6 +81,9 @@ export interface ModelConfig {
   enabled?: boolean
   isDefault?: boolean
   isActive: boolean
+  /** true = 官方/管理员预设，false/undefined = 用户自定义 */
+  official?: boolean
+  userId?: string
 }
 
 export interface AgentItem {
@@ -110,6 +113,7 @@ export interface UserStatsResponse {
   conversationCount: number
   messageCount: number
   recentActivityTrend: StatsTrendItem[]
+  yearlyActivityTrend: Array<{ date: string; count: number }>
   modelDistribution: DistributionItem[]
   agentDistribution: DistributionItem[]
   recentActiveAt?: string
@@ -144,17 +148,6 @@ export interface AdminUserItem {
   createdAt?: string
   registeredAt?: string
   lastLoginAt?: string
-}
-
-export interface AdminSessionItem {
-  id: string
-  userId?: string
-  title?: string
-  modelId?: string
-  messageCount?: number
-  createdAt?: string
-  updatedAt?: string
-  messages?: Array<{ id?: string; role?: string; content?: string; createdAt?: string }>
 }
 
 export interface AdminPromptItem {
@@ -208,24 +201,6 @@ const normalizeUser = (item: any): AdminUserItem => ({
   createdAt: item?.createdAt,
   registeredAt: item?.createdAt,
   lastLoginAt: item?.lastLoginAt,
-})
-
-const normalizeSession = (item: any): AdminSessionItem => ({
-  id: String(item?.id ?? ''),
-  userId: item?.userId != null ? String(item.userId) : undefined,
-  title: item?.title ?? '',
-  modelId: item?.modelId ?? '',
-  messageCount: Number(item?.messageCount ?? 0),
-  createdAt: item?.createdAt,
-  updatedAt: item?.updatedAt,
-  messages: Array.isArray(item?.messages)
-    ? item.messages.map((message: any) => ({
-        id: message?.id != null ? String(message.id) : undefined,
-        role: message?.role,
-        content: message?.content,
-        createdAt: message?.createdAt,
-      }))
-    : [],
 })
 
 const normalizePrompt = (item: any): AdminPromptItem => ({
@@ -288,22 +263,9 @@ export const adminAPI = {
   resetPassword: (id: string) => api.post(`/admin/users/${id}/reset-password`),
   setRole: (id: string, role: string) => api.post(`/admin/users/${id}/role`, { role }),
 
-  listSessions: async (filters?: any, page?: number, size?: number) => {
-    const response: any = await api.get('/admin/sessions', {
-      params: {
-        userId: filters?.userId,
-        modelId: filters?.modelId,
-        page,
-        size,
-      },
-    })
-    return toPageResult(response, normalizeSession)
-  },
-  sessionDetail: async (id: string) => normalizeSession(await api.get(`/admin/sessions/${id}`) as any),
-  cleanupSessions: (beforeTs: number) => api.post('/admin/sessions/cleanup', { beforeTs }),
-
   getConfig: () => api.get('/admin/config'),
   updateConfig: (payload: any) => api.put('/admin/config', payload),
+  cleanupChatRecords: () => api.post('/admin/config/chat-records/cleanup'),
 
   listPrompts: async () => {
     const response = await api.get<any[]>('/admin/prompts')
@@ -419,7 +381,38 @@ export const chatAPI = {
       return mockApi.mockChatAPI.testModel(modelId)
     }
     return api.post(`/models/${modelId}/test`)
-  }
+  },
+
+  // ---- 用户自定义模型 ----
+
+  getUserModels: (): Promise<ModelConfig[]> => {
+    return api.get<ModelConfig[]>('/models/user-models').then((res: any) =>
+      (Array.isArray(res) ? res : []).map((item: any) => ({
+        id: String(item.id ?? ''),
+        modelId: item.modelId ?? '',
+        name: item.name ?? '',
+        provider: item.provider ?? '',
+        temperature: item.temperature,
+        enabled: item.enabled !== false,
+        isDefault: item.isDefault === true,
+        isActive: item.enabled !== false,
+        official: false,
+        userId: item.userId != null ? String(item.userId) : undefined,
+      }))
+    )
+  },
+
+  createUserModel: (payload: { name: string; provider: string; modelId?: string; baseUrl?: string; apiKey: string; temperature?: number }) => {
+    return api.post('/models/user-models', payload)
+  },
+
+  updateUserModel: (id: string, payload: { name?: string; provider?: string; modelId?: string; baseUrl?: string; apiKey?: string; temperature?: number }) => {
+    return api.put(`/models/user-models/${id}`, payload)
+  },
+
+  deleteUserModel: (id: string) => {
+    return api.delete(`/models/user-models/${id}`)
+  },
 }
 
 export default api

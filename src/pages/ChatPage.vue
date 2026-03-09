@@ -17,21 +17,7 @@
           <h2>{{ currentConversation?.title || '新对话' }}</h2>
         </div>
         <div class="header-right">
-          <button class="control-btn subtle" @click="goToSettings" title="设置中心">
-            <i class="fa-solid fa-sliders"></i>
-            <span>设置中心</span>
-          </button>
-          <button
-            v-if="auth.isAdmin.value"
-            class="control-btn subtle admin-entry"
-            @click="goToAdmin"
-            title="管理后台"
-          >
-            <i class="fa-solid fa-shield-halved"></i>
-            <span>管理后台</span>
-          </button>
           <button class="control-btn" @click="showModelConfig = true" title="模型配置">
-            <i class="fa-solid fa-bolt" style="color: #eab308;"></i>
             <span>{{ currentModel.name }}</span>
             <i class="fa-solid fa-chevron-down" style="font-size: 12px; margin-left: 4px; color: var(--text-muted);"></i>
           </button>
@@ -43,7 +29,6 @@
           <div class="empty-content">
             <i class="fa-solid fa-robot empty-icon"></i>
             <h3>开始你的对话吧</h3>
-            <p>点击下方输入框左侧的加号可以使用提示词模板。</p>
           </div>
         </div>
         
@@ -96,7 +81,6 @@ import ModelConfig from '@/components/ModelConfig.vue'
 import PromptPanel from '@/components/PromptPanel.vue'
 import { useChatStore, type AIModel, type Conversation, type Message, type RuntimeConfigValues } from '@/composables/useChatStore'
 import { chatAPI } from '@/utils/api'
-import { useAuthStore } from '@/composables/useAuthStore'
 
 interface BackendMessage {
   id?: string | number
@@ -144,6 +128,7 @@ const {
   switchModel: storeSwitchModel,
   updateModelConfig: storeUpdateModelConfig,
   setModels,
+  setUserModels,
   setAgents
 } = chatStore
 
@@ -152,7 +137,6 @@ const messagesContainer = ref<HTMLElement>()
 const chatInputRef = ref<InstanceType<typeof ChatInput>>()
 const showModelConfig = ref(false)
 const showPromptPanel = ref(false)
-const auth = useAuthStore()
 
 const normalizeMessage = (message: BackendMessage): Message => ({
   id: String(message.id ?? Date.now()),
@@ -178,14 +162,15 @@ const normalizeConversation = (conversation: BackendConversation): Conversation 
   updatedAt: conversation.updatedAt ? new Date(conversation.updatedAt) : new Date()
 })
 
-const normalizeModel = (model: BackendModel): AIModel => ({
+const normalizeModel = (model: BackendModel, official = true): AIModel => ({
   id: model.modelId?.trim() || String(model.id ?? ''),
   name: model.name?.trim() || model.modelId?.trim() || '未命名模型',
   provider: model.provider?.trim() || 'openai-compatible',
   apiKey: model.apiKey,
   baseUrl: model.baseUrl,
   temperature: 0.7,
-  isActive: model.enabled !== false
+  isActive: model.enabled !== false,
+  official,
 })
 
 const resolveErrorMessage = (error: unknown, fallback: string) => {
@@ -221,15 +206,21 @@ const applyPrompt = (content: string) => {
 }
 
 const loadModels = async (preferredModelId?: string) => {
-  const response = await chatAPI.getModels()
-  const modelList = Array.isArray(response)
-    ? response
-        .map(item => normalizeModel(item as BackendModel))
-        .filter(item => !!item.id)
+  const [officialResp, userResp] = await Promise.allSettled([
+    chatAPI.getModels(),
+    chatAPI.getUserModels()
+  ])
+
+  const officialList = officialResp.status === 'fulfilled' && Array.isArray(officialResp.value)
+    ? (officialResp.value as BackendModel[]).map(item => normalizeModel(item, true)).filter(item => !!item.id)
     : []
 
-  if (modelList.length > 0) {
-    setModels(modelList, preferredModelId)
+  const userList = userResp.status === 'fulfilled' && Array.isArray(userResp.value)
+    ? (userResp.value as BackendModel[]).map(item => normalizeModel(item, false)).filter(item => !!item.id)
+    : []
+
+  if (officialList.length > 0 || userList.length > 0) {
+    setModels(officialList, userList, preferredModelId)
   }
 }
 
@@ -366,11 +357,6 @@ const goToSettings = () => {
   router.push('/settings/general')
 }
 
-const goToAdmin = () => {
-  if (!auth.isAdmin.value) return
-  router.push('/admin/dashboard')
-}
-
 const sendMessage = async (message: string) => {
   if (!currentConversation.value) {
     const conversation = storeCreateConversation()
@@ -480,8 +466,8 @@ onMounted(async () => {
   display: flex;
   height: 100vh;
   width: 100vw;
-  padding: 20px;
-  gap: 20px;
+  padding: var(--app-shell-padding);
+  gap: var(--app-shell-gap);
 }
 
 .chat-main {
@@ -548,24 +534,6 @@ onMounted(async () => {
 
 .control-btn i {
   font-size: 14px;
-}
-
-.control-btn.subtle {
-  background: rgba(255,255,255,0.04);
-  border-color: rgba(255,255,255,0.08);
-}
-
-.control-btn.subtle i {
-  color: var(--text-secondary);
-}
-
-.control-btn.admin-entry {
-  background: rgba(234, 179, 8, 0.1);
-  border-color: rgba(234, 179, 8, 0.24);
-}
-
-.control-btn.admin-entry i {
-  color: #facc15;
 }
 
 .chat-messages {

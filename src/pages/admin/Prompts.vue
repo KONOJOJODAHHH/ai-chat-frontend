@@ -4,15 +4,12 @@
       <div class="header-content">
         <div class="header-title">
           <i class="fa-solid fa-wand-magic-sparkles"></i>
-          <div>
-            <h1>Prompt 管理</h1>
-            <p>维护系统预置提示词</p>
-          </div>
+          <h1>提示词管理</h1>
         </div>
 
         <button class="primary-btn" @click="openCreate">
           <i class="fa-solid fa-plus"></i>
-          <span>新增 Prompt</span>
+          <span>新增提示词</span>
         </button>
       </div>
     </div>
@@ -46,10 +43,10 @@
 
     <div v-else class="empty-state glass-card">
       <i class="fa-solid fa-wand-magic-sparkles"></i>
-      <p>暂无 Prompt 模板</p>
+      <p>暂无提示词</p>
     </div>
 
-    <el-dialog v-model="visible" :title="editingId ? '编辑 Prompt' : '新增 Prompt'" width="720px">
+    <el-dialog v-model="visible" :title="editingId ? '编辑提示词' : '新增提示词'" width="720px">
       <div class="dialog-form">
         <div class="form-group">
           <label class="form-label">标题</label>
@@ -85,7 +82,7 @@ const load = async () => {
   try {
     items.value = await adminAPI.listPrompts()
   } catch (loadError: any) {
-    ElMessage.error(loadError?.message || 'Prompt 列表加载失败')
+    ElMessage.error(loadError?.message || '提示词列表加载失败')
   }
 }
 
@@ -110,10 +107,10 @@ const save = async () => {
   try {
     if (editingId.value) {
       await adminAPI.updatePrompt(editingId.value, form.value)
-      ElMessage.success('Prompt 已更新')
+      ElMessage.success('提示词已更新')
     } else {
       await adminAPI.createPrompt(form.value)
-      ElMessage.success('Prompt 已创建')
+      ElMessage.success('提示词已创建')
     }
     visible.value = false
     await load()
@@ -125,7 +122,7 @@ const save = async () => {
 const remove = async (row: AdminPromptItem) => {
   try {
     await adminAPI.deletePrompt(row.id)
-    ElMessage.success('Prompt 已删除')
+    ElMessage.success('提示词已删除')
     await load()
   } catch (actionError: any) {
     ElMessage.error(actionError?.message || '删除失败')
@@ -175,12 +172,8 @@ onMounted(load)
 .header-title h1 {
   margin: 0;
   color: var(--text-primary);
-}
-
-.header-title p {
-  margin: 6px 0 0;
-  color: var(--text-muted);
-  font-size: 14px;
+  font-size: var(--page-title-size);
+  font-weight: var(--page-title-weight);
 }
 
 .primary-btn,
@@ -296,27 +289,55 @@ onMounted(load)
   font-weight: 600;
 }
 
-.form-input,
+.form-input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--glass-border);
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.form-input::placeholder {
+  color: var(--text-muted);
+}
+
+.form-input:hover {
+  border-color: rgba(168, 199, 250, 0.3);
+}
+
+.form-input:focus {
+  border-color: var(--accent-primary);
+}
+
 .form-textarea {
   width: 100%;
   padding: 12px 14px;
   border-radius: 10px;
   border: 1px solid var(--glass-border);
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.3);
   color: var(--text-primary);
-}
-
-.form-textarea {
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.6;
+  outline: none;
   resize: vertical;
+  transition: border-color 0.2s;
 }
 
-:deep(.el-dialog) {
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: 16px;
+.form-textarea::placeholder {
+  color: var(--text-muted);
 }
 
-:deep(.el-dialog__title) {
-  color: var(--text-primary);
+.form-textarea:hover {
+  border-color: rgba(168, 199, 250, 0.3);
+}
+
+.form-textarea:focus {
+  border-color: var(--accent-primary);
 }
 </style>

@@ -31,7 +31,6 @@
           <div v-else class="empty-state">
             <i class="fa-solid fa-inbox"></i>
             <p>暂无可用官方提示词</p>
-            <span>提示词由后台统一维护，这里不再保留本地自定义提示词机制。</span>
           </div>
         </div>
       </div>
@@ -145,9 +144,8 @@ onMounted(async () => {
 }
 
 .modal-title {
-  font-family: 'Orbitron';
   font-size: 18px;
-  color: white;
+  color: var(--text-primary);
   font-weight: 600;
   display: flex;
   align-items: center;
@@ -185,10 +183,26 @@ onMounted(async () => {
 .search-box input {
   width: 100%;
   padding: 12px 12px 12px 40px;
-  background: rgba(0,0,0,0.3);
+  background: rgba(0, 0, 0, 0.3);
   border: 1px solid var(--glass-border);
   border-radius: 10px;
-  color: white;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.search-box input::placeholder {
+  color: var(--text-muted);
+}
+
+.search-box input:hover {
+  border-color: rgba(168, 199, 250, 0.3);
+}
+
+.search-box input:focus {
+  border-color: var(--accent-primary);
 }
 
 .search-box i {

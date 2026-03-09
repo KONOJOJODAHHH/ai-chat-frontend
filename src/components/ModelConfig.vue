@@ -28,7 +28,13 @@
             <div class="form-group">
               <label class="form-label">模型</label>
               <el-select v-model="draft.modelId" placeholder="选择模型" class="glass-select" popper-class="glass-dropdown">
-                <el-option v-for="model in models" :key="model.id" :label="`${model.name}（${model.provider}）`" :value="model.id" />
+                <el-option-group v-if="officialModels.length" label="官方预设">
+                  <el-option v-for="model in officialModels" :key="model.id" :label="`${model.name}（${model.provider}）`" :value="model.id" />
+                </el-option-group>
+                <el-option-group v-if="userModels.length" label="我的自定义">
+                  <el-option v-for="model in userModels" :key="model.id" :label="`${model.name}（${model.provider}）`" :value="model.id" />
+                </el-option-group>
+                <el-option v-if="!officialModels.length && !userModels.length" v-for="model in models" :key="model.id" :label="`${model.name}（${model.provider}）`" :value="model.id" />
               </el-select>
             </div>
           </div>
@@ -107,6 +113,9 @@ const draft = reactive<Required<RuntimeConfigValues>>({
 })
 
 const allAgents = computed(() => [...props.officialAgents, ...props.privateAgents])
+
+const officialModels = computed(() => props.models.filter(m => m.official !== false))
+const userModels = computed(() => props.models.filter(m => m.official === false))
 
 const selectedAgent = computed(() => allAgents.value.find(agent => agent.id === draft.agentId) || null)
 const selectedModelName = computed(() => props.models.find(model => model.id === draft.modelId)?.name || props.currentModel.name)
@@ -266,9 +275,26 @@ const saveConfig = () => {
   background: rgba(0,0,0,0.3);
   border: 1px solid var(--glass-border);
   border-radius: 8px;
-  color: white;
-  font-family: 'Inter', sans-serif;
+  color: var(--text-primary);
+  font-family: inherit;
   font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.form-input::placeholder,
+.form-textarea::placeholder {
+  color: var(--text-muted);
+}
+
+.form-input:hover,
+.form-textarea:hover {
+  border-color: rgba(168, 199, 250, 0.25);
+}
+
+.form-input:focus,
+.form-textarea:focus {
+  border-color: rgba(168, 199, 250, 0.5);
 }
 
 .form-textarea {

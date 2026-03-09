@@ -105,6 +105,7 @@ export const mockChatAPI = {
       { label: '2026-03-07', count: 7, successCount: 7, failureCount: 0 },
       { label: '2026-03-08', count: 9, successCount: 8, failureCount: 1 },
     ],
+    yearlyActivityTrend: [],
     modelDistribution: [
       { name: 'deepseek', count: 18 },
       { name: 'doubao', count: 7 },

@@ -1,86 +1,84 @@
 <template>
-  <section class="settings-page glass-card">
-    <header class="page-header">
-      <div>
-        <h2>智能体</h2>
-        <p>管理官方预设与我的智能体，保存后可在会话中直接切换使用。</p>
-      </div>
+  <section class="settings-page">
+    <div class="page-title-row">
+      <h2 class="page-title">智能体</h2>
       <button class="primary-btn" @click="openCreate">
         <i class="fa-solid fa-plus"></i>
-        <span>新建我的智能体</span>
+        <span>新建智能体</span>
       </button>
-    </header>
-
-    <div class="section-stack">
-      <section class="agent-section">
-        <div class="section-title">
-          <h3>官方预设</h3>
-          <span>可直接在聊天顶部切换</span>
-        </div>
-        <div class="agent-grid">
-          <article v-for="agent in officialAgents" :key="agent.id" class="agent-card">
-            <div>
-              <h4>{{ agent.name }}</h4>
-              <p>{{ agent.description || '未填写说明' }}</p>
-            </div>
-            <div class="agent-meta">
-              <span>{{ resolveModelName(agent.modelId) }}</span>
-              <span>发散度 {{ formatTemperature(agent.temperature) }}</span>
-            </div>
-          </article>
-        </div>
-      </section>
-
-      <section class="agent-section">
-        <div class="section-title">
-          <h3>我的智能体</h3>
-          <span>私有，仅当前账号可见</span>
-        </div>
-        <div v-if="privateAgents.length" class="agent-grid">
-          <article v-for="agent in privateAgents" :key="agent.id" class="agent-card private-card">
-            <div>
-              <h4>{{ agent.name }}</h4>
-              <p>{{ agent.description || '未填写说明' }}</p>
-            </div>
-            <div class="agent-meta">
-              <span>{{ resolveModelName(agent.modelId) }}</span>
-              <span>发散度 {{ formatTemperature(agent.temperature) }}</span>
-            </div>
-            <div class="agent-actions">
-              <button class="ghost-btn" @click="openEdit(agent)">编辑</button>
-              <button class="ghost-btn danger" @click="removeAgent(agent.id)">删除</button>
-            </div>
-          </article>
-        </div>
-        <div v-else class="empty-card">你还没有创建私有智能体。</div>
-      </section>
     </div>
 
-    <el-dialog v-model="visible" :title="editingId ? '编辑智能体' : '新建智能体'" width="720px">
+    <!-- 官方预设 -->
+    <div class="settings-section">
+      <div class="section-header">
+        <h3>官方预设</h3>
+      </div>
+
+      <div v-if="officialAgents.length">
+        <div v-for="agent in officialAgents" :key="agent.id" class="agent-row">
+          <div class="agent-info">
+            <span class="agent-name">{{ agent.name }}</span>
+            <span class="agent-desc">{{ agent.description || '未填写说明' }}</span>
+          </div>
+          <div class="agent-tags">
+            <span class="tag">{{ resolveModelName(agent.modelId) }}</span>
+            <span class="tag">发散度 {{ formatTemperature(agent.temperature) }}</span>
+          </div>
+        </div>
+      </div>
+      <div v-else class="empty-row">暂无官方预设</div>
+    </div>
+
+    <!-- 我的智能体 -->
+    <div class="settings-section">
+      <div class="section-header">
+        <h3>我的智能体</h3>
+      </div>
+
+      <div v-if="privateAgents.length">
+        <div v-for="agent in privateAgents" :key="agent.id" class="agent-row">
+          <div class="agent-info">
+            <span class="agent-name">{{ agent.name }}</span>
+            <span class="agent-desc">{{ agent.description || '未填写说明' }}</span>
+          </div>
+          <div class="agent-actions">
+            <span class="tag">{{ resolveModelName(agent.modelId) }}</span>
+            <button class="ghost-btn" @click="openEdit(agent)">编辑</button>
+            <button class="ghost-btn danger" @click="removeAgent(agent.id)">删除</button>
+          </div>
+        </div>
+      </div>
+      <div v-else class="empty-row">你还没有创建智能体。点击右上角「新建智能体」开始创建。</div>
+    </div>
+
+    <!-- 编辑/新建对话框 -->
+    <el-dialog v-model="visible" :title="editingId ? '编辑智能体' : '新建智能体'" width="680px">
       <div class="dialog-form">
-        <div class="form-group">
+        <div class="dialog-row">
           <label>名称</label>
-          <input v-model="form.name" class="form-input" placeholder="例如：代码审查助手" />
+          <input v-model="form.name" class="dialog-input" placeholder="例如：代码审查助手" />
         </div>
-        <div class="form-group">
+        <div class="dialog-row">
           <label>说明</label>
-          <input v-model="form.description" class="form-input" placeholder="说明这个智能体适合做什么" />
+          <input v-model="form.description" class="dialog-input" placeholder="说明这个智能体适合做什么" />
         </div>
-        <div class="form-group">
+        <div class="dialog-row">
           <label>默认模型</label>
-          <select v-model="form.modelId" class="form-input glass-select-native">
+          <select v-model="form.modelId" class="dialog-input glass-select-native">
             <option value="">请选择模型</option>
             <option v-for="model in chat.models.value" :key="model.id" :value="model.id">{{ model.name }}</option>
           </select>
         </div>
-        <div class="form-group">
-          <label>发散度（回答随机性）</label>
-          <input v-model="form.temperature" class="range-input glass-range" type="range" min="0" max="2" step="0.1" />
-          <div class="range-value">{{ Number(form.temperature).toFixed(1) }}（越高越发散）</div>
+        <div class="dialog-row">
+          <label>发散度</label>
+          <div class="range-wrap">
+            <input v-model="form.temperature" class="range-input glass-range" type="range" min="0" max="2" step="0.1" />
+            <span class="range-val">{{ Number(form.temperature).toFixed(1) }}（越高越随机）</span>
+          </div>
         </div>
-        <div class="form-group">
+        <div class="dialog-row col">
           <label>系统提示词</label>
-          <textarea v-model="form.systemPrompt" class="form-textarea" rows="8" placeholder="输入这个智能体的系统提示词"></textarea>
+          <textarea v-model="form.systemPrompt" class="dialog-textarea" rows="7" placeholder="输入这个智能体的系统提示词"></textarea>
         </div>
       </div>
       <template #footer>
@@ -122,9 +120,8 @@ const loadAgents = async () => {
   }
 }
 
-const resolveModelName = (modelId?: string) => {
-  return chat.models.value.find(model => model.id === modelId)?.name || modelId || '未指定模型'
-}
+const resolveModelName = (modelId?: string) =>
+  chat.models.value.find(model => model.id === modelId)?.name || modelId || '未指定模型'
 
 const formatTemperature = (value?: number) => Number(value ?? 0.7).toFixed(1)
 
@@ -157,7 +154,6 @@ const saveAgent = async () => {
     ElMessage.warning('请输入智能体名称')
     return
   }
-
   const payload = {
     name: form.name.trim(),
     description: form.description.trim(),
@@ -165,7 +161,6 @@ const saveAgent = async () => {
     systemPrompt: form.systemPrompt,
     temperature: Number(form.temperature),
   }
-
   try {
     if (editingId.value) {
       await chatAPI.updateAgent(editingId.value, payload)
@@ -195,30 +190,278 @@ onMounted(loadAgents)
 </script>
 
 <style scoped>
-.settings-page { min-height: 100%; box-sizing: border-box; padding: 20px; }
-.page-header { margin-bottom: 28px; display: flex; justify-content: space-between; gap: 20px; align-items: flex-start; }
-h2 { margin: 0 0 12px; font-size: 26px; font-weight: 700; }
-.page-header p { margin: 0; color: var(--text-secondary); line-height: 1.7; }
-.section-stack { display: grid; gap: 18px; }
-.agent-section { display: grid; gap: 14px; }
-.section-title { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
-.section-title h3 { margin: 0; }
-.section-title span { color: var(--text-secondary); font-size: 13px; }
-.agent-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
-.agent-card, .empty-card { padding: 24px; border-radius: 20px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.04); display: grid; gap: 12px; }
-.agent-card h4 { margin: 0 0 6px; font-size: 18px; }
-.agent-card p, .empty-card { color: var(--text-secondary); line-height: 1.7; }
-.agent-meta, .agent-actions, .dialog-footer { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
-.private-card { border-color: rgba(168, 199, 250, 0.18); }
-.dialog-form { display: grid; gap: 14px; }
-.form-group { display: grid; gap: 8px; }
-.form-input, .form-textarea { width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.3); color: var(--text-primary); font-family: 'Inter', sans-serif; font-size: 14px; outline: none; transition: border-color 0.2s; }
-.form-textarea { resize: vertical; }
-.range-input { width: 100%; margin-top: 4px; }
-.range-value { color: var(--text-secondary); font-size: 13px; margin-top: 6px; }
-.primary-btn, .ghost-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; padding: 0 16px; border-radius: 10px; cursor: pointer; }
-.primary-btn { border: none; background: var(--accent-primary); color: #0a0a0a; }
-.ghost-btn { border: 1px solid var(--glass-border); background: rgba(255,255,255,0.05); color: var(--text-primary); }
-.ghost-btn.danger { color: #f87171; border-color: rgba(248,113,113,0.25); }
-@media (max-width: 900px) { .page-header, .agent-grid { grid-template-columns: 1fr; display: grid; } }
+.settings-page {
+  padding: 28px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-height: 100%;
+  box-sizing: border-box;
+}
+
+.page-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.page-title {
+  margin: 0;
+  font-size: var(--page-title-size);
+  font-weight: var(--page-title-weight);
+}
+
+/* 卡片 */
+.settings-section {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.section-header {
+  padding: 18px 24px 0;
+}
+
+.section-header h3 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* 智能体行 */
+.agent-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 16px 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.settings-section > div:not(.section-header) > .agent-row:first-child,
+.agent-row:first-of-type {
+  margin-top: 12px;
+}
+
+.agent-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.agent-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.agent-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agent-tags, .agent-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--glass-border);
+  color: var(--text-secondary);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.empty-row {
+  padding: 20px 24px;
+  color: var(--text-muted);
+  font-size: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* 按钮 */
+.primary-btn, .ghost-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: inherit;
+  transition: all 0.18s ease;
+}
+
+.primary-btn {
+  border: 1px solid rgba(168, 199, 250, 0.25);
+  background: rgba(168, 199, 250, 0.12);
+  color: var(--accent-primary);
+  font-weight: 500;
+}
+
+.primary-btn:hover {
+  background: rgba(168, 199, 250, 0.2);
+}
+
+.ghost-btn {
+  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+}
+
+.ghost-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.ghost-btn.danger {
+  color: #f87171;
+  border-color: rgba(248, 113, 113, 0.25);
+}
+
+.ghost-btn.danger:hover {
+  background: rgba(248, 113, 113, 0.08);
+}
+
+/* 对话框表单 */
+.dialog-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.dialog-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.dialog-row.col {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.dialog-row label {
+  width: 90px;
+  flex-shrink: 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.dialog-input {
+  flex: 1;
+  min-height: 38px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid var(--glass-border);
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.dialog-input::placeholder {
+  color: var(--text-muted);
+}
+
+.dialog-input:hover {
+  border-color: rgba(168, 199, 250, 0.3);
+}
+
+.dialog-input:focus {
+  border-color: var(--accent-primary);
+}
+
+/* select 特殊处理：覆盖 appearance 以支持自定义箭头 */
+select.dialog-input {
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 0 36px 0 12px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239ca3af' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: calc(100% - 12px) center;
+  cursor: pointer;
+}
+
+select.dialog-input option {
+  background: #18181b;
+  color: var(--text-primary);
+}
+
+.dialog-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--glass-border);
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.6;
+  outline: none;
+  resize: vertical;
+  transition: border-color 0.2s;
+}
+
+.dialog-textarea::placeholder {
+  color: var(--text-muted);
+}
+
+.dialog-textarea:hover {
+  border-color: rgba(168, 199, 250, 0.3);
+}
+
+.dialog-textarea:focus {
+  border-color: var(--accent-primary);
+}
+
+.range-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.range-input {
+  width: 100%;
+}
+
+.range-val {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+@media (max-width: 900px) {
+  .settings-page { padding: 20px 16px; }
+  .page-title-row { flex-wrap: wrap; }
+  .agent-row { flex-direction: column; align-items: flex-start; gap: 10px; }
+}
 </style>

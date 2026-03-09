@@ -8,6 +8,12 @@
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   line-height: 1.5;
   font-weight: 400;
+  --app-shell-padding: 20px;
+  --app-shell-gap: 20px;
+  --app-sidebar-width: 240px;
+  --page-content-padding: 20px;
+  --page-title-size: 24px;
+  --page-title-weight: 700;
 
   /* 背景色 */
   --bg-color: #0a0a0a;
@@ -74,6 +80,27 @@
   --button-primary-bg: rgba(255, 255, 255, 0.08);
   --button-primary-hover: rgba(255, 255, 255, 0.12);
   --button-primary-text: #ececec;
+
+  /* Element Plus 内部变量覆盖：消除输入框白底 */
+  --el-fill-color-blank: transparent;
+  --el-fill-color: rgba(255, 255, 255, 0.04);
+  --el-fill-color-light: rgba(255, 255, 255, 0.06);
+  --el-fill-color-lighter: rgba(255, 255, 255, 0.03);
+  --el-fill-color-extra-light: rgba(255, 255, 255, 0.02);
+  --el-bg-color: rgba(20, 20, 24, 0.97);
+  --el-bg-color-overlay: rgba(24, 24, 27, 0.97);
+  --el-bg-color-page: #0a0a0a;
+  --el-text-color-primary: #ececec;
+  --el-text-color-regular: #9ca3af;
+  --el-text-color-secondary: #9ca3af;
+  --el-text-color-placeholder: #6b7280;
+  --el-text-color-disabled: #4b5563;
+  --el-border-color: rgba(255, 255, 255, 0.08);
+  --el-border-color-light: rgba(255, 255, 255, 0.06);
+  --el-border-color-lighter: rgba(255, 255, 255, 0.04);
+  --el-border-color-extra-light: rgba(255, 255, 255, 0.03);
+  --el-mask-color: rgba(0, 0, 0, 0.7);
+  --el-mask-color-extra-light: rgba(0, 0, 0, 0.4);
 }
 
 * {
@@ -91,6 +118,13 @@ body {
   overflow: hidden;
   position: relative;
   transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
 }
 
 /* 动态极光背景 */
@@ -154,7 +188,7 @@ body {
   padding: 12px 20px;
   cursor: pointer;
   transition: all 0.2s var(--ease-out);
-  font-family: 'Inter', sans-serif;
+  font-family: inherit;
   font-weight: 500;
 }
 
@@ -211,6 +245,11 @@ body {
   color: var(--text-primary) !important;
 }
 
+.glass-select .el-input__inner::placeholder,
+.glass-select .el-input__placeholder span {
+  color: var(--text-muted) !important;
+}
+
 .glass-dropdown.el-popper {
   background: rgba(24, 24, 27, 0.9) !important;
   backdrop-filter: blur(20px) !important;
@@ -226,16 +265,20 @@ body {
   margin: 0 4px;
 }
 
-.glass-dropdown .el-select-dropdown__item.hover,
+.glass-dropdown .el-select-dropdown__item.is-hovering,
 .glass-dropdown .el-select-dropdown__item:hover {
   background: rgba(255, 255, 255, 0.08) !important;
   color: var(--text-primary) !important;
 }
 
-.glass-dropdown .el-select-dropdown__item.selected {
+.glass-dropdown .el-select-dropdown__item.is-selected {
   color: var(--accent-primary) !important;
   font-weight: 600;
-  background: transparent !important;
+  background: rgba(168, 199, 250, 0.08) !important;
+}
+
+.glass-dropdown .el-select-dropdown__item.is-selected.is-hovering {
+  background: rgba(168, 199, 250, 0.14) !important;
 }
 
 .glass-dropdown .el-popper__arrow::before {
@@ -261,7 +304,7 @@ body {
   background-repeat: no-repeat;
   background-position: calc(100% - 12px) center;
   color: var(--text-primary);
-  font-family: 'Inter', sans-serif;
+  font-family: inherit;
   font-size: 14px;
   width: 100%;
   cursor: pointer;
@@ -330,7 +373,7 @@ body {
   border: 1px solid var(--glass-border);
   background: rgba(0, 0, 0, 0.3);
   color: var(--text-primary);
-  font-family: 'Inter', sans-serif;
+  font-family: inherit;
   font-size: 14px;
   outline: none;
   transition: border-color 0.2s;
@@ -360,7 +403,7 @@ body {
   border: 1px solid var(--glass-border);
   background: rgba(0, 0, 0, 0.3);
   color: var(--text-primary);
-  font-family: 'Inter', sans-serif;
+  font-family: inherit;
   font-size: 14px;
   line-height: 1.6;
   outline: none;
@@ -378,4 +421,257 @@ body {
 
 .glass-textarea::placeholder {
   color: var(--text-muted);
+}
+
+/* ===== Element Plus 全局暗色主题覆盖 ===== */
+
+/* ---- el-overlay 背景遮罩 ---- */
+.el-overlay {
+  background-color: rgba(0, 0, 0, 0.7) !important;
+  backdrop-filter: blur(4px);
+}
+
+/* ---- el-dialog ---- */
+.el-dialog {
+  background-color: rgba(20, 20, 24, 0.97) !important;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--glass-border) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.65) !important;
+  overflow: hidden;
+}
+
+.el-dialog__header {
+  padding: 20px 24px 18px !important;
+  border-bottom: 1px solid var(--glass-border) !important;
+  margin-right: 0 !important;
+  background: transparent !important;
+}
+
+.el-dialog__title {
+  color: var(--text-primary) !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+}
+
+.el-dialog__headerbtn {
+  top: 16px !important;
+  right: 16px !important;
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 8px;
+  transition: background 0.18s;
+}
+
+.el-dialog__headerbtn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.el-dialog__close {
+  color: var(--text-muted) !important;
+  font-size: 18px !important;
+  transition: color 0.18s !important;
+}
+
+.el-dialog__headerbtn:hover .el-dialog__close {
+  color: var(--text-primary) !important;
+}
+
+.el-dialog__body {
+  padding: 20px 24px !important;
+  color: var(--text-primary) !important;
+}
+
+.el-dialog__footer {
+  padding: 16px 24px !important;
+  border-top: 1px solid var(--glass-border) !important;
+  background: transparent !important;
+}
+
+/* ---- el-input ---- */
+.el-input__wrapper {
+  background-color: rgba(0, 0, 0, 0.3) !important;
+  box-shadow: 0 0 0 1px var(--glass-border) inset !important;
+  border-radius: 10px !important;
+  transition: box-shadow 0.2s !important;
+}
+
+.el-input__wrapper:hover {
+  box-shadow: 0 0 0 1px rgba(168, 199, 250, 0.35) inset !important;
+}
+
+.el-input__wrapper.is-focus {
+  box-shadow: 0 0 0 1px var(--accent-primary) inset !important;
+}
+
+.el-input__inner {
+  color: var(--text-primary) !important;
+  background-color: transparent !important;
+}
+
+.el-input__inner::placeholder {
+  color: var(--text-muted) !important;
+}
+
+/* ---- el-textarea ---- */
+.el-textarea__inner {
+  background-color: rgba(0, 0, 0, 0.3) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: 10px !important;
+  color: var(--text-primary) !important;
+  box-shadow: none !important;
+  font-family: inherit !important;
+  resize: vertical;
+  transition: border-color 0.2s !important;
+}
+
+.el-textarea__inner:hover {
+  border-color: rgba(168, 199, 250, 0.35) !important;
+}
+
+.el-textarea__inner:focus {
+  border-color: var(--accent-primary) !important;
+  box-shadow: none !important;
+}
+
+.el-textarea__inner::placeholder {
+  color: var(--text-muted) !important;
+}
+
+/* ---- el-form-item label ---- */
+.el-form-item__label {
+  color: var(--text-secondary) !important;
+  font-weight: 500 !important;
+}
+
+/* ---- el-input-number ---- */
+.el-input-number .el-input-number__decrease,
+.el-input-number .el-input-number__increase {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-color: var(--glass-border) !important;
+  color: var(--text-secondary) !important;
+  transition: color 0.18s, background 0.18s !important;
+}
+
+.el-input-number .el-input-number__decrease:hover,
+.el-input-number .el-input-number__increase:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: var(--accent-primary) !important;
+}
+
+/* ---- 通用原生 input/textarea/select 基础样式 ---- */
+.glass-field-input {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--glass-border);
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.glass-field-input:hover {
+  border-color: rgba(168, 199, 250, 0.3);
+}
+
+.glass-field-input:focus {
+  border-color: var(--accent-primary);
+}
+
+.glass-field-input::placeholder {
+  color: var(--text-muted);
+}
+
+/* ---- 自定义 checkbox ---- */
+.glass-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.glass-checkbox input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  border: 1px solid var(--glass-border);
+  background: rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+  transition: all 0.18s;
+}
+
+.glass-checkbox input[type="checkbox"]:hover {
+  border-color: rgba(168, 199, 250, 0.4);
+}
+
+.glass-checkbox input[type="checkbox"]:checked {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+}
+
+.glass-checkbox input[type="checkbox"]:checked::after {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 2px;
+  width: 5px;
+  height: 9px;
+  border: 2px solid #0a0a0a;
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg);
+}
+
+/* ==================== 浏览器自动填充（autofill）覆盖 ==================== */
+/* Chrome/Edge autofill 会强制叠加白色背景，用 inset box-shadow 遮盖 */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px rgba(15, 15, 18, 0.95) inset !important;
+  -webkit-text-fill-color: var(--text-primary) !important;
+  caret-color: var(--text-primary) !important;
+  /* 延迟背景色过渡，防止白色闪烁 */
+  transition: background-color 5000s ease-in-out 0s !important;
+}
+
+/* Element Plus el-input 内层 input 的 autofill 覆盖 */
+.el-input__inner:-webkit-autofill,
+.el-input__inner:-webkit-autofill:hover,
+.el-input__inner:-webkit-autofill:focus,
+.el-input__inner:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px rgba(15, 15, 18, 0.95) inset !important;
+  -webkit-text-fill-color: var(--text-primary) !important;
+  caret-color: var(--text-primary) !important;
+  transition: background-color 5000s ease-in-out 0s !important;
+}
+
+/* 浅色主题下 autofill 背景同步 */
+:root.light input:-webkit-autofill,
+:root.light input:-webkit-autofill:hover,
+:root.light input:-webkit-autofill:focus,
+:root.light input:-webkit-autofill:active,
+:root.light .el-input__inner:-webkit-autofill,
+:root.light .el-input__inner:-webkit-autofill:hover,
+:root.light .el-input__inner:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px rgba(248, 250, 255, 0.97) inset !important;
+  -webkit-text-fill-color: var(--text-primary) !important;
+  caret-color: var(--text-primary) !important;
+  transition: background-color 5000s ease-in-out 0s !important;
 }

@@ -4,10 +4,7 @@
       <div class="header-content">
         <div class="header-title">
           <i class="fa-solid fa-wave-square"></i>
-          <div>
-            <h1>调用日志</h1>
-            <p>展示真实聊天调用结果、模型、智能体与耗时，不再承载空实现提示。</p>
-          </div>
+          <h1>调用日志</h1>
         </div>
 
         <div class="search-box">
@@ -46,7 +43,6 @@
     <div v-else class="empty-state glass-card">
       <i class="fa-solid fa-inbox"></i>
       <p>暂无调用日志</p>
-      <span>当用户开始实际对话后，这里会展示成功率、模型与耗时记录。</span>
     </div>
   </div>
 </template>
@@ -118,12 +114,8 @@ onMounted(load)
 .header-title h1 {
   margin: 0;
   color: var(--text-primary);
-}
-
-.header-title p {
-  margin: 6px 0 0;
-  color: var(--text-muted);
-  font-size: 14px;
+  font-size: var(--page-title-size);
+  font-weight: var(--page-title-weight);
 }
 
 .search-box {
@@ -143,8 +135,24 @@ onMounted(load)
   padding: 10px 14px 10px 40px;
   border-radius: 10px;
   border: 1px solid var(--glass-border);
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.3);
   color: var(--text-primary);
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.search-box input::placeholder {
+  color: var(--text-muted);
+}
+
+.search-box input:hover {
+  border-color: rgba(168, 199, 250, 0.3);
+}
+
+.search-box input:focus {
+  border-color: var(--accent-primary);
 }
 
 .toolbar {
@@ -226,12 +234,6 @@ onMounted(load)
 .empty-state i {
   font-size: 48px;
   margin-bottom: 12px;
-}
-
-.empty-state span {
-  display: block;
-  margin-top: 8px;
-  font-size: 13px;
 }
 
 @media (max-width: 768px) {

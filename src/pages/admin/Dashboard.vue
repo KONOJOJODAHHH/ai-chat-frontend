@@ -4,14 +4,11 @@
       <div class="header-main">
         <div class="header-title">
           <i class="fa-solid fa-chart-line"></i>
-          <div>
-            <h1>Dashboard</h1>
-            <p>Overview of live backend metrics.</p>
-          </div>
+          <h1>仪表盘</h1>
         </div>
         <button class="refresh-btn" :disabled="loading" @click="load">
           <i class="fa-solid fa-rotate-right" :class="{ spinning: loading }"></i>
-          <span>{{ loading ? 'Refreshing...' : 'Refresh' }}</span>
+          <span>{{ loading ? '刷新中...' : '刷新' }}</span>
         </button>
       </div>
 
@@ -46,60 +43,41 @@
     <div class="content-grid">
       <section class="chart-card glass-card">
         <div class="section-header">
-          <h2>Model calls</h2>
-          <span class="section-note">Approximate by session count</span>
+          <h2>模型调用</h2>
         </div>
 
         <div v-if="dashboard.modelCalls.length" class="chart-body">
-          <div v-for="item in dashboard.modelCalls" :key="item.name" class="chart-item">
-            <div class="chart-label">
-              <span class="model-name">{{ item.name }}</span>
-              <span class="model-count">{{ item.count }} calls</span>
-            </div>
-            <div class="progress-bar">
-              <div class="progress-fill" :style="{ width: getProgress(item.count) }"></div>
-            </div>
-          </div>
+          <DonutChart :data="dashboard.modelCalls" />
         </div>
         <div v-else class="empty-state">暂无模型调用数据</div>
       </section>
 
       <section class="chart-card glass-card">
         <div class="section-header">
-          <h2>会话趋势</h2>
-          <span class="section-note">最近 7 天新增会话</span>
+          <h2>全站会话活跃图 (近365天)</h2>
         </div>
 
-        <div v-if="dashboard.sessionTrend.length" class="chart-body">
-          <div v-for="item in dashboard.sessionTrend" :key="item.label" class="chart-item">
-            <div class="chart-label">
-              <span class="model-name">{{ item.label }}</span>
-              <span class="model-count">{{ item.count }}</span>
-            </div>
-            <div class="progress-bar">
-              <div class="progress-fill alt-fill" :style="{ width: getTrendProgress(item.count, dashboard.sessionTrend) }"></div>
-            </div>
-          </div>
+        <div v-if="dashboard.yearlyActivityTrend.length" class="chart-body heatmap-wrapper">
+          <ContributionHeatmap :data="dashboard.yearlyActivityTrend" />
         </div>
         <div v-else class="empty-state">暂无会话趋势数据</div>
       </section>
 
       <section class="summary-card glass-card">
         <div class="section-header">
-          <h2>Summary</h2>
-          <span class="section-note">Loaded from admin APIs</span>
+          <h2>概览</h2>
         </div>
         <div class="summary-list">
           <div class="summary-item">
-            <span>Total users</span>
+            <span>用户总数</span>
             <strong>{{ dashboard.users }}</strong>
           </div>
           <div class="summary-item">
-            <span>Total sessions</span>
+            <span>会话总数</span>
             <strong>{{ dashboard.sessions }}</strong>
           </div>
           <div class="summary-item">
-            <span>Total messages</span>
+            <span>消息总量</span>
             <strong>{{ dashboard.messages }}</strong>
           </div>
           <div class="summary-item">
@@ -116,13 +94,9 @@
       <section class="summary-card glass-card">
         <div class="section-header">
           <h2>智能体分布</h2>
-          <span class="section-note">调用来源结构</span>
         </div>
-        <div v-if="dashboard.agentCalls.length" class="summary-list">
-          <div v-for="item in dashboard.agentCalls" :key="item.name" class="summary-item">
-            <span>{{ item.name }}</span>
-            <strong>{{ item.count }}</strong>
-          </div>
+        <div v-if="dashboard.agentCalls.length" class="chart-body">
+          <DonutChart :data="dashboard.agentCalls" />
         </div>
         <div v-else class="empty-state">暂无智能体调用数据</div>
       </section>
@@ -134,6 +108,8 @@
 import { computed, onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { adminAPI } from '@/utils/api'
+import DonutChart from '@/components/charts/DonutChart.vue'
+import ContributionHeatmap from '@/components/charts/ContributionHeatmap.vue'
 
 interface DashboardState {
   users: number
@@ -144,6 +120,7 @@ interface DashboardState {
   modelCalls: Array<{ name: string; count: number }>
   agentCalls: Array<{ name: string; count: number }>
   sessionTrend: Array<{ label: string; count: number }>
+  yearlyActivityTrend: Array<{ date: string; count: number }>
   failureCount: number
   averageDuration: number
 }
@@ -157,6 +134,7 @@ const dashboard = ref<DashboardState>({
   modelCalls: [],
   agentCalls: [],
   sessionTrend: [],
+  yearlyActivityTrend: [],
   failureCount: 0,
   averageDuration: 0,
 })
@@ -164,11 +142,11 @@ const loading = ref(false)
 const error = ref('')
 
 const statCards = computed(() => [
-  { label: 'Users', value: dashboard.value.users, icon: 'fa-solid fa-users', color: '#3b82f6', bg: 'rgba(59, 130, 246, 0.1)' },
-  { label: 'Active users', value: dashboard.value.activeUsers, icon: 'fa-solid fa-users-rays', color: '#8b5cf6', bg: 'rgba(139, 92, 246, 0.1)' },
-  { label: 'Sessions', value: dashboard.value.sessions, icon: 'fa-solid fa-comments', color: 'var(--accent-primary)', bg: 'rgba(168, 199, 250, 0.1)' },
-  { label: 'Messages', value: dashboard.value.messages, icon: 'fa-solid fa-message', color: '#22c55e', bg: 'rgba(34, 197, 94, 0.1)' },
-  { label: 'Failure count', value: dashboard.value.failureCount, icon: 'fa-solid fa-triangle-exclamation', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.1)' },
+  { label: '用户总数', value: dashboard.value.users, icon: 'fa-solid fa-users', color: '#3b82f6', bg: 'rgba(59, 130, 246, 0.1)' },
+  { label: '活跃用户', value: dashboard.value.activeUsers, icon: 'fa-solid fa-users-rays', color: '#8b5cf6', bg: 'rgba(139, 92, 246, 0.1)' },
+  { label: '会话总数', value: dashboard.value.sessions, icon: 'fa-solid fa-comments', color: 'var(--accent-primary)', bg: 'rgba(168, 199, 250, 0.1)' },
+  { label: '消息总量', value: dashboard.value.messages, icon: 'fa-solid fa-message', color: '#22c55e', bg: 'rgba(34, 197, 94, 0.1)' },
+  { label: '失败次数', value: dashboard.value.failureCount, icon: 'fa-solid fa-triangle-exclamation', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.1)' },
 ])
 
 const getProgress = (count: number) => {
@@ -198,6 +176,7 @@ const load = async () => {
       modelCalls: Array.isArray(dashboardPayload?.modelCalls) ? dashboardPayload.modelCalls : [],
       agentCalls: Array.isArray(dashboardPayload?.agentCalls) ? dashboardPayload.agentCalls : [],
       sessionTrend: Array.isArray(dashboardPayload?.sessionTrend) ? dashboardPayload.sessionTrend : [],
+      yearlyActivityTrend: Array.isArray(dashboardPayload?.yearlyActivityTrend) ? dashboardPayload.yearlyActivityTrend : [],
       failureCount: Number(dashboardPayload?.failureCount || 0),
       averageDuration: Number(dashboardPayload?.averageDuration || 0),
     }
@@ -251,13 +230,8 @@ onMounted(load)
 .header-title h1 {
   margin: 0;
   color: var(--text-primary);
-  font-size: 24px;
-}
-
-.header-title p {
-  margin: 6px 0 0;
-  color: var(--text-muted);
-  font-size: 14px;
+  font-size: var(--page-title-size);
+  font-weight: var(--page-title-weight);
 }
 
 .header-tags {
@@ -349,7 +323,8 @@ onMounted(load)
   color: var(--text-primary);
   font-size: 32px;
   font-weight: 700;
-  font-family: 'Orbitron', sans-serif;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
 }
 
 .chart-card,
@@ -360,7 +335,6 @@ onMounted(load)
 .section-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
   margin-bottom: 20px;
   padding-bottom: 14px;
@@ -371,11 +345,6 @@ onMounted(load)
   margin: 0;
   color: var(--text-primary);
   font-size: 18px;
-}
-
-.section-note {
-  color: var(--text-muted);
-  font-size: 12px;
 }
 
 .chart-body {
@@ -400,7 +369,7 @@ onMounted(load)
 
 .model-count {
   color: var(--text-muted);
-  font-family: 'Orbitron', sans-serif;
+  font-variant-numeric: tabular-nums;
 }
 
 .progress-bar {
@@ -436,7 +405,7 @@ onMounted(load)
 
 .summary-item strong {
   color: var(--text-primary);
-  font-family: 'Orbitron', sans-serif;
+  font-variant-numeric: tabular-nums;
 }
 
 .empty-state {

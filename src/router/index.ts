@@ -7,7 +7,6 @@ import AdminLayout from '@/layouts/AdminLayout.vue'
 import AdminDashboard from '@/pages/admin/Dashboard.vue'
 import AdminModels from '@/pages/admin/Models.vue'
 import AdminUsers from '@/pages/admin/Users.vue'
-import AdminSessions from '@/pages/admin/Sessions.vue'
 import AdminConfig from '@/pages/admin/Config.vue'
 import AdminLogs from '@/pages/admin/Logs.vue'
 import AdminPrompts from '@/pages/admin/Prompts.vue'
@@ -48,7 +47,6 @@ const routes: any = [
       { path: 'dashboard', component: AdminDashboard },
       { path: 'models', component: AdminModels },
       { path: 'users', component: AdminUsers },
-      { path: 'sessions', component: AdminSessions },
       { path: 'config', component: AdminConfig },
       { path: 'logs', component: AdminLogs },
       { path: 'prompts', component: AdminPrompts },

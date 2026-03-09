@@ -29,6 +29,8 @@ export interface AIModel {
   baseUrl?: string
   temperature?: number
   isActive: boolean
+  /** true = 官方/管理员预设，false/undefined = 用户自定义 */
+  official?: boolean
 }
 
 export interface AgentDefinition {
@@ -83,6 +85,11 @@ let __chatStore: ReturnType<typeof createChatStore> | null = null
 function createChatStore() {
   const conversations = ref<Conversation[]>([])
   const currentConversation = ref<Conversation | null>(null)
+  /** 官方预设模型（管理员配置） */
+  const officialModels = ref<AIModel[]>([])
+  /** 当前用户自定义模型 */
+  const userModels = ref<AIModel[]>([])
+  /** 合并官方 + 自定义（用于选择器） */
   const models = ref<AIModel[]>([])
   const currentModel = ref<AIModel>({
     id: '',
@@ -344,16 +351,19 @@ function createChatStore() {
     }
   }
 
-  const setModels = (items: AIModel[], preferredModelId?: string) => {
-    if (!items.length) return
+  const setModels = (officialItems: AIModel[], userItems: AIModel[] = [], preferredModelId?: string) => {
+    officialModels.value = officialItems
+    userModels.value = userItems
+    models.value = [...officialItems, ...userItems]
 
-    models.value = items
+    const allItems = models.value
+    if (!allItems.length) return
 
     const nextModel = preferredModelId
-      ? items.find(item => item.id === preferredModelId)
-      : items.find(item => item.id === currentModel.value.id)
-        || items.find(item => item.isActive)
-        || items[0]
+      ? allItems.find(item => item.id === preferredModelId)
+      : allItems.find(item => item.id === currentModel.value.id)
+        || allItems.find(item => item.isActive)
+        || allItems[0]
 
     if (nextModel) {
       currentModel.value = nextModel
@@ -361,6 +371,11 @@ function createChatStore() {
         setUserRuntimeDefaults({ modelId: nextModel.id })
       }
     }
+  }
+
+  const setUserModels = (items: AIModel[]) => {
+    userModels.value = items
+    models.value = [...officialModels.value, ...items]
   }
 
   const setPreferences = (nextPreferences: Partial<UserPreferenceState>) => {
@@ -375,6 +390,8 @@ function createChatStore() {
     conversations,
     currentConversation,
     models,
+    officialModels,
+    userModels,
     currentModel,
     officialAgents,
     privateAgents,
@@ -401,7 +418,8 @@ function createChatStore() {
     setPreferences,
     switchModel,
     updateModelConfig,
-    setModels
+    setModels,
+    setUserModels
   }
 }
 

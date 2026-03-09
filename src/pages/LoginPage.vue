@@ -102,7 +102,7 @@
             </span>
           </div>
 
-          <label class="checkbox-label">
+          <label class="checkbox-label glass-checkbox">
             <input type="checkbox" v-model="form.remember" />
             <span class="checkbox-text">记住我</span>
           </label>
@@ -599,12 +599,7 @@ const onSubmit = async () => {
   user-select: none;
 }
 
-.checkbox-label input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-  cursor: pointer;
-}
-
+/* checkbox 由 glass-checkbox 全局类接管，此处仅保留文字颜色 */
 .checkbox-text {
   font-size: 14px;
   color: rgba(255, 255, 255, 0.7);

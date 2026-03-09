@@ -54,11 +54,11 @@
     <div class="user-dropdown-menu" v-show="showUserMenu">
       <div class="user-menu-item" @click.stop="openSettings">
         <i class="fa-solid fa-gear"></i>
-        <span>系统设置</span>
+        <span>设置中心</span>
       </div>
       <div v-if="isAdmin" class="user-menu-item" @click.stop="openAdmin">
         <i class="fa-solid fa-shield-halved"></i>
-        <span>进入后台</span>
+        <span>管理后台</span>
       </div>
       <div class="user-menu-divider"></div>
       <div class="user-menu-item danger" @click.stop="handleLogout">
@@ -184,10 +184,10 @@ onUnmounted(() => document.removeEventListener('click', handleOutsideClick))
 
 <style scoped>
 .conversation-sidebar {
-  width: 260px;
+  width: var(--app-sidebar-width);
   display: flex;
   flex-direction: column;
-  padding: 24px;
+  padding: 20px;
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s var(--ease-out);
   z-index: 10;
@@ -230,7 +230,7 @@ onUnmounted(() => document.removeEventListener('click', handleOutsideClick))
   justify-content: center;
   gap: 8px;
   transition: all 0.2s;
-  font-family: 'Inter', sans-serif;
+  font-family: inherit;
   font-size: 14px;
   font-weight: 500;
   margin-bottom: 25px;

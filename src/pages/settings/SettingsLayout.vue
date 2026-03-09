@@ -3,7 +3,7 @@
     <aside class="settings-sidebar glass-card">
       <div class="settings-brand">
         <div>
-          <h1>系统设置</h1>
+          <h1>设置中心</h1>
         </div>
         <router-link to="/" class="nav-chip primary">
           <i class="fa-solid fa-comments"></i>
@@ -24,7 +24,6 @@
           </div>
           <div class="nav-copy">
             <span class="nav-label">{{ item.label }}</span>
-            <span class="nav-hint">{{ item.hint }}</span>
           </div>
         </router-link>
       </nav>
@@ -36,7 +35,7 @@
         </div>
         <router-link v-if="auth.isAdmin.value" to="/admin/dashboard" class="nav-chip accent">
           <i class="fa-solid fa-shield-halved"></i>
-          <span>进入后台</span>
+          <span>管理后台</span>
         </router-link>
       </div>
     </aside>
@@ -55,11 +54,11 @@ const route = useRoute()
 const auth = useAuthStore()
 
 const navItems = [
-  { path: '/settings/general', label: '通用设置', hint: '主题、界面与快捷键偏好', icon: 'fa-solid fa-sliders' },
-  { path: '/settings/account', label: '账号管理', hint: '资料维护与密码修改', icon: 'fa-solid fa-user-gear' },
-  { path: '/settings/stats', label: '数据统计', hint: '个人使用概览与趋势分析', icon: 'fa-solid fa-chart-line' },
-  { path: '/settings/models', label: '模型服务', hint: '默认模型与运行时配置', icon: 'fa-solid fa-microchip' },
-  { path: '/settings/agents', label: '智能体', hint: '官方预设与我的智能体', icon: 'fa-solid fa-sparkles' },
+  { path: '/settings/general', label: '通用设置', icon: 'fa-solid fa-sliders' },
+  { path: '/settings/account', label: '账号管理', icon: 'fa-solid fa-user-gear' },
+  { path: '/settings/stats', label: '数据统计', icon: 'fa-solid fa-chart-line' },
+  { path: '/settings/models', label: '模型服务', icon: 'fa-solid fa-microchip' },
+  { path: '/settings/agents', label: '智能体', icon: 'fa-solid fa-sparkles' },
 ]
 
 const isActive = (path: string) => route.path === path || route.path.startsWith(`${path}/`)
@@ -71,18 +70,18 @@ const isActive = (path: string) => route.path === path || route.path.startsWith(
   width: 100vw;
   box-sizing: border-box;
   display: flex;
-  gap: 20px;
-  padding: 20px;
+  gap: var(--app-shell-gap);
+  padding: var(--app-shell-padding);
   overflow: hidden;
 }
 
 .settings-sidebar {
-  width: 260px;
+  width: var(--app-sidebar-width);
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
   gap: 20px;
-  padding: 24px;
+  padding: 20px;
   height: 100%;
   box-sizing: border-box;
   overflow-y: auto;
@@ -111,9 +110,9 @@ const isActive = (path: string) => route.path === path || route.path.startsWith(
 
 .settings-brand h1 {
   margin: 0;
-  font-size: 26px;
+  font-size: var(--page-title-size);
   line-height: 1.1;
-  font-weight: 700;
+  font-weight: var(--page-title-weight);
 }
 
 .settings-nav {
@@ -125,8 +124,8 @@ const isActive = (path: string) => route.path === path || route.path.startsWith(
 .nav-item {
   display: flex;
   gap: 14px;
-  align-items: flex-start;
-  padding: 16px;
+  align-items: center;
+  padding: 14px 16px;
   border-radius: 18px;
   text-decoration: none;
   color: var(--text-secondary);
@@ -155,16 +154,11 @@ const isActive = (path: string) => route.path === path || route.path.startsWith(
 .nav-copy {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 0;
 }
 
 .nav-label {
   font-weight: 600;
-}
-
-.nav-hint {
-  font-size: 12px;
-  line-height: 1.5;
 }
 
 .settings-footer {
@@ -211,11 +205,12 @@ const isActive = (path: string) => route.path === path || route.path.startsWith(
 }
 
 .settings-main {
+  flex: 1;
   min-width: 0;
   height: 100%;
   box-sizing: border-box;
   overflow-y: auto;
-  padding-right: 8px; /* Breathing room for scrollbar */
+  padding-right: 4px;
 }
 
 /* Elegant scrollbar for main panel */
@@ -238,7 +233,7 @@ const isActive = (path: string) => route.path === path || route.path.startsWith(
     flex-direction: column;
     height: auto;
     overflow: visible;
-    padding: 10px;
+    padding: 12px;
   }
   .settings-sidebar {
     width: 100%;

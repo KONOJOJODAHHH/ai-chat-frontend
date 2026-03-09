@@ -29,7 +29,7 @@
         <div class="switch-stack">
           <router-link to="/" class="back-btn primary">
             <i class="fa-solid fa-comments"></i>
-            <span>前台聊天</span>
+            <span>返回聊天</span>
           </router-link>
           <router-link to="/settings/general" class="back-btn">
             <i class="fa-solid fa-sliders"></i>
@@ -53,7 +53,6 @@ const route = useRoute()
 const menuItems = [
   { path: '/admin/dashboard', label: '仪表盘', icon: 'fa-solid fa-chart-line' },
   { path: '/admin/users', label: '用户管理', icon: 'fa-solid fa-users' },
-  { path: '/admin/sessions', label: '会话管理', icon: 'fa-solid fa-comments' },
   { path: '/admin/models', label: '模型管理', icon: 'fa-solid fa-microchip' },
   { path: '/admin/prompts', label: '官方预设', icon: 'fa-solid fa-wand-magic-sparkles' },
   { path: '/admin/config', label: '系统配置', icon: 'fa-solid fa-gear' },
@@ -69,14 +68,14 @@ const isActive = (path: string) => route.path === path || route.path.startsWith(
   height: 100vh;
   width: 100vw;
   box-sizing: border-box;
-  padding: 20px;
-  gap: 20px;
+  padding: var(--app-shell-padding);
+  gap: var(--app-shell-gap);
   background: var(--bg-color);
   position: relative;
 }
 
 .admin-sidebar {
-  width: 260px;
+  width: var(--app-sidebar-width);
   flex-shrink: 0;
   display: flex;
   flex-direction: column;

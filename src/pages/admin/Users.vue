@@ -4,10 +4,7 @@
       <div class="header-content">
         <div class="header-title">
           <i class="fa-solid fa-users"></i>
-          <div>
-            <h1>用户管理</h1>
-            <p>查看、禁用、重置密码和调整角色</p>
-          </div>
+          <h1>用户管理</h1>
         </div>
         <div class="search-box">
           <i class="fa-solid fa-search"></i>
@@ -218,13 +215,8 @@ onMounted(load)
 .header-title h1 {
   margin: 0;
   color: var(--text-primary);
-  font-size: 24px;
-}
-
-.header-title p {
-  margin: 6px 0 0;
-  color: var(--text-muted);
-  font-size: 14px;
+  font-size: var(--page-title-size);
+  font-weight: var(--page-title-weight);
 }
 
 .search-box {
@@ -242,10 +234,26 @@ onMounted(load)
 .search-box input {
   width: 280px;
   padding: 10px 14px 10px 40px;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.3);
   border: 1px solid var(--glass-border);
   border-radius: 10px;
   color: var(--text-primary);
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.search-box input::placeholder {
+  color: var(--text-muted);
+}
+
+.search-box input:hover {
+  border-color: rgba(168, 199, 250, 0.3);
+}
+
+.search-box input:focus {
+  border-color: var(--accent-primary);
 }
 
 .users-grid {
@@ -357,7 +365,7 @@ onMounted(load)
 
 .field-value {
   color: var(--text-secondary);
-  font-family: 'Consolas', monospace;
+  font-variant-numeric: tabular-nums;
 }
 
 .user-actions {
@@ -370,8 +378,6 @@ onMounted(load)
 .role-select {
   border-radius: 10px;
   border: 1px solid var(--glass-border);
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--text-secondary);
 }
 
 .action-btn {
@@ -380,11 +386,46 @@ onMounted(load)
   gap: 6px;
   padding: 8px 12px;
   cursor: pointer;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+  transition: all 0.18s;
+}
+
+.action-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
 }
 
 .role-select {
   flex: 1;
-  padding: 8px 12px;
+  padding: 8px 36px 8px 12px;
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: rgba(0, 0, 0, 0.3);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239ca3af' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: calc(100% - 12px) center;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.role-select:hover {
+  border-color: rgba(168, 199, 250, 0.3);
+  color: var(--text-primary);
+}
+
+.role-select:focus {
+  border-color: var(--accent-primary);
+  color: var(--text-primary);
+}
+
+.role-select option {
+  background: #18181b;
+  color: var(--text-primary);
 }
 
 .empty-state {

@@ -1,23 +1,23 @@
 <template>
-  <section class="settings-page glass-card">
-    <header class="page-header">
-      <div>
-        <h2>通用设置</h2>
-        <p>调整主题风格、界面布局与快捷键偏好，所有改动将立即生效。</p>
-      </div>
-    </header>
+  <section class="settings-page">
+    <h2 class="page-title">通用设置</h2>
 
-    <div class="section-grid">
-      <article class="settings-card">
-        <div class="section-title">
-          <h3>主题模式</h3>
-          <span>即时生效</span>
+    <!-- 主题模式 -->
+    <div class="settings-section">
+      <div class="section-header">
+        <h3>外观</h3>
+      </div>
+
+      <div class="setting-row">
+        <div class="setting-label-wrap">
+          <span class="setting-label">主题模式</span>
+          <span class="setting-desc">选择界面的明暗风格</span>
         </div>
-        <div class="option-group three-col">
+        <div class="inline-option-group">
           <button
             v-for="option in themeOptions"
             :key="option.value"
-            class="option-btn"
+            class="opt-btn"
             :class="{ active: theme.themeMode.value === option.value }"
             @click="theme.setThemeMode(option.value)"
           >
@@ -25,18 +25,25 @@
             <span>{{ option.label }}</span>
           </button>
         </div>
-      </article>
+      </div>
+    </div>
 
-      <article class="settings-card">
-        <div class="section-title">
-          <h3>会话列表密度</h3>
-          <span>已保存</span>
+    <!-- 会话 -->
+    <div class="settings-section">
+      <div class="section-header">
+        <h3>会话</h3>
+      </div>
+
+      <div class="setting-row">
+        <div class="setting-label-wrap">
+          <span class="setting-label">列表密度</span>
+          <span class="setting-desc">调整左侧会话列表的显示紧凑程度</span>
         </div>
-        <div class="option-group">
+        <div class="inline-option-group">
           <button
             v-for="option in densityOptions"
             :key="option.value"
-            class="option-btn"
+            class="opt-btn"
             :class="{ active: preferences.conversationDensity === option.value }"
             @click="updatePreference('conversationDensity', option.value)"
           >
@@ -44,18 +51,18 @@
             <span>{{ option.label }}</span>
           </button>
         </div>
-      </article>
+      </div>
 
-      <article class="settings-card full-width">
-        <div class="section-title">
-          <h3>发送快捷键</h3>
-          <span>将作用于后续统一输入体验</span>
+      <div class="setting-row">
+        <div class="setting-label-wrap">
+          <span class="setting-label">发送快捷键</span>
+          <span class="setting-desc">按下该键发送消息</span>
         </div>
-        <div class="option-group">
+        <div class="inline-option-group">
           <button
             v-for="option in shortcutOptions"
             :key="option.value"
-            class="option-btn"
+            class="opt-btn"
             :class="{ active: preferences.sendShortcut === option.value }"
             @click="updatePreference('sendShortcut', option.value)"
           >
@@ -63,7 +70,7 @@
             <span>{{ option.label }}</span>
           </button>
         </div>
-      </article>
+      </div>
     </div>
   </section>
 </template>
@@ -94,27 +101,113 @@ const shortcutOptions = [
 ] as const
 
 const updatePreference = <TKey extends keyof UserPreferenceState>(key: TKey, value: UserPreferenceState[TKey]) => {
-  chat.setPreferences({
-    [key]: value,
-  })
+  chat.setPreferences({ [key]: value })
 }
 </script>
 
 <style scoped>
-.settings-page { min-height: 100%; box-sizing: border-box; padding: 20px; }
-.page-header { margin-bottom: 28px; }
-h2 { margin: 0 0 12px; font-size: 26px; font-weight: 700; }
-.page-header p { margin: 0; color: var(--text-secondary); line-height: 1.7; }
-.section-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
-.settings-card { padding: 24px; border-radius: 20px; background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border); display: flex; flex-direction: column; gap: 18px; }
-.settings-card.full-width { grid-column: 1 / -1; }
-.section-title { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.section-title h3 { margin: 0; font-size: 18px; }
-.section-title span { color: var(--text-secondary); font-size: 12px; }
-.option-group { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-.option-group.three-col { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.option-btn { min-height: 56px; border-radius: 16px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.03); color: var(--text-primary); display: inline-flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; transition: all 0.2s ease; }
-.option-btn.active { background: rgba(168, 199, 250, 0.12); border-color: rgba(168, 199, 250, 0.28); color: var(--accent-primary); }
-.option-btn:hover { transform: translateY(-1px); }
-@media (max-width: 900px) { .section-grid, .option-group, .option-group.three-col { grid-template-columns: 1fr; } }
+.settings-page {
+  padding: 28px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-height: 100%;
+  box-sizing: border-box;
+}
+
+.page-title {
+  margin: 0 0 4px;
+  font-size: var(--page-title-size);
+  font-weight: var(--page-title-weight);
+}
+
+.settings-section {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.section-header {
+  padding: 18px 24px 0;
+}
+
+.section-header h3 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 18px 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.setting-row:first-of-type {
+  margin-top: 12px;
+}
+
+.setting-label-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.setting-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.setting-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.inline-option-group {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.opt-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 13px;
+  font-family: inherit;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+
+.opt-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+}
+
+.opt-btn.active {
+  background: rgba(168, 199, 250, 0.12);
+  border-color: rgba(168, 199, 250, 0.35);
+  color: var(--accent-primary);
+}
+
+@media (max-width: 900px) {
+  .settings-page { padding: 20px 16px; }
+  .setting-row { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .inline-option-group { flex-wrap: wrap; }
+}
 </style>

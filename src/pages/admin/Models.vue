@@ -4,10 +4,7 @@
       <div class="header-content">
         <div class="header-title">
           <i class="fa-solid fa-microchip"></i>
-          <div>
-            <h1>模型管理</h1>
-            <p>管理后端实际可用的大模型配置</p>
-          </div>
+          <h1>模型管理</h1>
         </div>
 
         <div class="header-actions">
@@ -332,12 +329,8 @@ onMounted(load)
 .header-title h1 {
   margin: 0;
   color: var(--text-primary);
-}
-
-.header-title p {
-  margin: 6px 0 0;
-  color: var(--text-muted);
-  font-size: 14px;
+  font-size: var(--page-title-size);
+  font-weight: var(--page-title-weight);
 }
 
 .search-box {
@@ -355,10 +348,26 @@ onMounted(load)
 .search-box input {
   width: 260px;
   padding: 10px 14px 10px 40px;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.3);
   border: 1px solid var(--glass-border);
   border-radius: 10px;
   color: var(--text-primary);
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.search-box input::placeholder {
+  color: var(--text-muted);
+}
+
+.search-box input:hover {
+  border-color: rgba(168, 199, 250, 0.3);
+}
+
+.search-box input:focus {
+  border-color: var(--accent-primary);
 }
 
 .primary-btn,

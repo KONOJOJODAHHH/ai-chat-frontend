@@ -1,57 +1,53 @@
 <template>
-  <section class="settings-page glass-card">
-    <header class="page-header">
-      <div>
-        <h2>数据统计</h2>
-        <p>展示个人使用概况与趋势分析，数据来自服务器实时聚合。</p>
-      </div>
-      <button class="refresh-btn" :disabled="loading" @click="load">
+  <section class="settings-page">
+    <div class="page-title-row">
+      <h2 class="page-title">数据统计</h2>
+      <button class="ghost-btn" :disabled="loading" @click="load">
         <i class="fa-solid fa-rotate-right" :class="{ spinning: loading }"></i>
-        <span>{{ loading ? '刷新中...' : '刷新统计' }}</span>
+        <span>{{ loading ? '刷新中...' : '刷新' }}</span>
       </button>
-    </header>
-
-    <div class="stats-grid">
-      <article v-for="card in cards" :key="card.title" class="stat-card">
-        <span>{{ card.title }}</span>
-        <strong>{{ card.value }}</strong>
-        <small>{{ card.description }}</small>
-      </article>
     </div>
 
-    <div class="charts-grid">
-      <section class="chart-card">
-        <div class="chart-header">
-          <h3>最近 7 天活跃趋势</h3>
-          <span>按真实聊天调用聚合</span>
-        </div>
-        <div v-if="trendItems.length" class="trend-list">
-          <div v-for="item in trendItems" :key="item.label" class="trend-item">
-            <div class="trend-label">
-              <span>{{ item.label }}</span>
-              <strong>{{ item.count }}</strong>
-            </div>
-            <div class="trend-bar">
-              <div class="trend-fill" :style="{ width: getTrendWidth(item.count) }"></div>
-            </div>
-          </div>
-        </div>
-        <div v-else class="empty-inline">暂无趋势数据</div>
-      </section>
+    <!-- 统计概览 -->
+    <div class="stats-grid">
+      <div v-for="card in cards" :key="card.title" class="stat-card">
+        <span class="stat-label">{{ card.title }}</span>
+        <strong class="stat-value">{{ card.value }}</strong>
+      </div>
+    </div>
 
-      <section class="chart-card">
-        <div class="chart-header">
-          <h3>常用模型分布</h3>
-          <span>按真实调用记录统计</span>
+    <!-- 全站活跃热力图 -->
+    <div class="settings-section chart-section">
+      <div class="section-header">
+        <h3>活跃贡献热力图 (近365天)</h3>
+      </div>
+      <div v-if="yearlyActivityTrend.length" class="chart-body heatmap-wrapper">
+        <ContributionHeatmap :data="yearlyActivityTrend" height="180px" />
+      </div>
+      <div v-else class="empty-row">暂无行为数据</div>
+    </div>
+
+    <!-- 模型与智能体分布 -->
+    <div class="stats-row-grid">
+      <div class="settings-section chart-section">
+        <div class="section-header">
+          <h3>模型调用偏好</h3>
         </div>
-        <div v-if="modelDistribution.length" class="distribution-list">
-          <div v-for="item in modelDistribution" :key="item.name" class="distribution-item">
-            <span>{{ item.name }}</span>
-            <strong>{{ item.count }}</strong>
-          </div>
+        <div v-if="modelDistribution.length" class="chart-body">
+          <DonutChart :data="modelDistribution" />
         </div>
-        <div v-else class="empty-inline">暂无模型分布数据</div>
-      </section>
+        <div v-else class="empty-row">暂无模型调用数据</div>
+      </div>
+      
+      <div class="settings-section chart-section">
+        <div class="section-header">
+          <h3>智能体偏好</h3>
+        </div>
+        <div v-if="agentDistribution.length" class="chart-body">
+          <DonutChart :data="agentDistribution" />
+        </div>
+        <div v-else class="empty-row">暂无智能体调用数据</div>
+      </div>
     </div>
   </section>
 </template>
@@ -60,6 +56,8 @@
 import { computed, onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { chatAPI, type DistributionItem, type UserStatsResponse } from '@/utils/api'
+import DonutChart from '@/components/charts/DonutChart.vue'
+import ContributionHeatmap from '@/components/charts/ContributionHeatmap.vue'
 
 const loading = ref(false)
 const stats = ref<UserStatsResponse | null>(null)
@@ -67,20 +65,16 @@ const stats = ref<UserStatsResponse | null>(null)
 const cards = computed(() => {
   const current = stats.value
   return [
-    { title: '个人会话数', value: current?.conversationCount ?? '--', description: '按当前账号真实会话记录统计。' },
-    { title: '消息总量', value: current?.messageCount ?? '--', description: '基于后端消息表与调用链聚合。' },
-    { title: '失败次数', value: current?.failureCount ?? '--', description: '统计真实失败调用次数。' },
-    { title: '平均响应时长', value: current?.averageDuration ? `${current.averageDuration} ms` : '--', description: '按真实调用日志计算。' },
+    { title: '个人会话数', value: current?.conversationCount ?? '--' },
+    { title: '消息总量', value: current?.messageCount ?? '--' },
+    { title: '失败次数', value: current?.failureCount ?? '--' },
+    { title: '平均响应时长', value: current?.averageDuration ? `${current.averageDuration} ms` : '--' },
   ]
 })
 
-const trendItems = computed(() => stats.value?.recentActivityTrend || [])
+const yearlyActivityTrend = computed(() => stats.value?.yearlyActivityTrend || [])
 const modelDistribution = computed<DistributionItem[]>(() => stats.value?.modelDistribution || [])
-
-const getTrendWidth = (count: number) => {
-  const max = Math.max(...trendItems.value.map(item => item.count), 1)
-  return `${Math.max(10, Math.round((count / max) * 100))}%`
-}
+const agentDistribution = computed<DistributionItem[]>(() => stats.value?.agentDistribution || [])
 
 const load = async () => {
   loading.value = true
@@ -97,27 +91,198 @@ onMounted(load)
 </script>
 
 <style scoped>
-.settings-page { min-height: 100%; box-sizing: border-box; padding: 20px; }
-.page-header { margin-bottom: 28px; display: flex; justify-content: space-between; gap: 20px; align-items: flex-start; }
-h2 { margin: 0 0 12px; font-size: 26px; font-weight: 700; }
-p { margin: 0; color: var(--text-secondary); line-height: 1.7; }
-.stats-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
-.stat-card { padding: 24px; border-radius: 20px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.04); display: flex; flex-direction: column; gap: 10px; }
-.stat-card strong { font-size: 24px; color: var(--text-primary); }
-.stat-card small { color: var(--text-secondary); line-height: 1.7; }
-.refresh-btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border: none; border-radius: 10px; background: var(--accent-primary); color: #0a0a0a; cursor: pointer; font-weight: 600; }
-.charts-grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin-top: 16px; }
-.chart-card { padding: 24px; border-radius: 20px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.04); }
-.chart-header { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 16px; }
-.chart-header h3 { margin: 0; }
-.chart-header span { color: var(--text-secondary); font-size: 12px; }
-.trend-list, .distribution-list { display: grid; gap: 14px; }
-.trend-label, .distribution-item { display: flex; justify-content: space-between; gap: 12px; color: var(--text-secondary); }
-.trend-bar { height: 12px; border-radius: 999px; background: rgba(255,255,255,0.06); overflow: hidden; border: 1px solid var(--glass-border); }
-.trend-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--accent-primary), var(--accent-hover)); }
-.distribution-item strong, .trend-label strong { color: var(--text-primary); }
-.empty-inline { color: var(--text-muted); padding: 12px 0; }
-.spinning { animation: spin 1s linear infinite; }
-@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-@media (max-width: 900px) { .page-header, .stats-grid, .charts-grid { grid-template-columns: 1fr; display: grid; } }
+.settings-page {
+  padding: 28px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-height: 100%;
+  box-sizing: border-box;
+}
+
+.page-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.page-title {
+  margin: 0;
+  font-size: var(--page-title-size);
+  font-weight: var(--page-title-weight);
+}
+
+/* 统计卡片 */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.stat-card {
+  padding: 20px 22px;
+  border-radius: 18px;
+  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.stat-value {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.stats-row-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+/* 分组卡片 */
+.settings-section {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-section {
+  padding-bottom: 24px;
+}
+
+.chart-body {
+  padding: 0 24px;
+  flex: 1;
+}
+
+.section-header {
+  padding: 18px 24px 0;
+}
+
+.section-header h3 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 14px 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.trend-body .setting-row:first-child,
+.setting-row:first-of-type {
+  margin-top: 12px;
+}
+
+.setting-label {
+  font-size: 14px;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.row-value {
+  font-size: 14px;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* 趋势条 */
+.trend-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  min-width: 140px;
+}
+
+.trend-bar {
+  flex: 1;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+.trend-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent-primary), var(--accent-hover));
+  transition: width 0.4s ease;
+}
+
+.trend-count {
+  font-size: 13px;
+  color: var(--text-primary);
+  min-width: 24px;
+  text-align: right;
+}
+
+.empty-row {
+  padding: 20px 24px;
+  color: var(--text-muted);
+  font-size: 14px;
+  text-align: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.ghost-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 13px;
+  font-family: inherit;
+  transition: all 0.18s ease;
+}
+
+.ghost-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.ghost-btn:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 900px) {
+  .settings-page { padding: 20px 16px; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .trend-right { min-width: 100px; }
+}
 </style>
