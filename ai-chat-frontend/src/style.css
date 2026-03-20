@@ -1,0 +1,618 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==================== 核心变量 ==================== */
+:root {
+  /* 字体 */
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  --app-shell-padding: 20px;
+  --app-shell-gap: 20px;
+  --app-sidebar-width: 240px;
+  --page-content-padding: 20px;
+  --page-title-size: 24px;
+  --page-title-weight: 700;
+
+  /* 背景色 */
+  --bg-color: #0a0a0a;
+  --glass-bg: rgba(23, 23, 23, 0.6);
+  --glass-border: rgba(255, 255, 255, 0.06);
+
+  /* 主题色 */
+  --accent-primary: #A8C7FA;
+  --accent-hover: #C5D9FC;
+  --accent-subtle: rgba(168, 199, 250, 0.1);
+
+  /* 文字颜色 */
+  --text-primary: #ececec;
+  --text-secondary: #9ca3af;
+  --text-muted: #6b7280;
+
+  /* 消息背景 */
+  --user-msg-bg: rgba(255, 255, 255, 0.08);
+  --ai-msg-bg: transparent;
+
+  /* 按钮 */
+  --button-primary-bg: rgba(255, 255, 255, 0.08);
+  --button-primary-hover: rgba(255, 255, 255, 0.12);
+  --button-primary-text: #ececec;
+
+  /* 动画曲线 */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+:root.light {
+  --bg-color: #f3f6fb;
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-border: rgba(15, 23, 42, 0.08);
+  --accent-primary: #315efb;
+  --accent-hover: #5b7cff;
+  --accent-subtle: rgba(49, 94, 251, 0.08);
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+  --text-muted: #6b7280;
+  --user-msg-bg: rgba(49, 94, 251, 0.08);
+  --ai-msg-bg: rgba(255, 255, 255, 0.65);
+  --button-primary-bg: rgba(255, 255, 255, 0.7);
+  --button-primary-hover: rgba(255, 255, 255, 0.95);
+  --button-primary-text: #111827;
+}
+
+:root.dark {
+  --bg-color: #0a0a0a;
+  --glass-bg: rgba(23, 23, 23, 0.6);
+  --glass-border: rgba(255, 255, 255, 0.06);
+  --accent-primary: #A8C7FA;
+  --accent-hover: #C5D9FC;
+  --accent-subtle: rgba(168, 199, 250, 0.1);
+  --text-primary: #ececec;
+  --text-secondary: #9ca3af;
+  --text-muted: #6b7280;
+  --user-msg-bg: rgba(255, 255, 255, 0.08);
+  --ai-msg-bg: transparent;
+  --button-primary-bg: rgba(255, 255, 255, 0.08);
+  --button-primary-hover: rgba(255, 255, 255, 0.12);
+  --button-primary-text: #ececec;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  outline: none;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+  overflow: hidden;
+  position: relative;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+/* 动态极光背景 */
+.aurora-bg {
+  position: fixed;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at 50% 50%, rgba(29, 78, 216, 0.12), transparent 40%),
+    radial-gradient(circle at 80% 20%, rgba(99, 102, 241, 0.08), transparent 30%);
+  animation: auroraMove 20s infinite alternate linear;
+  z-index: -1;
+  pointer-events: none;
+}
+
+@keyframes auroraMove {
+  0% {
+    transform: translate(0, 0);
+  }
+
+  100% {
+    transform: translate(-5%, -5%);
+  }
+}
+
+/* 滚动条美化 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* 通用玻璃拟态卡片 */
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+}
+
+/* 通用按钮样式 */
+.matrix-btn {
+  background: var(--button-primary-bg);
+  border: 1px solid var(--glass-border);
+  color: var(--button-primary-text);
+  border-radius: 12px;
+  padding: 12px 20px;
+  cursor: pointer;
+  transition: all 0.2s var(--ease-out);
+  font-family: inherit;
+  font-weight: 500;
+}
+
+.matrix-btn:hover {
+  background: var(--button-primary-hover);
+  border-color: var(--accent-primary);
+  transform: translateY(-1px);
+}
+
+/* 消息滑入动画 */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 思考动画 */
+@keyframes pulse {
+
+  0%,
+  100% {
+    height: 8px;
+    opacity: 0.5;
+  }
+
+  50% {
+    height: 16px;
+    opacity: 1;
+    background: var(--accent-primary);
+  }
+}
+
+/* 自定义 el-select 玻璃拟态风格（兼容 el-input__wrapper / el-select__wrapper） */
+.glass-select .el-input__wrapper,
+.glass-select .el-select__wrapper {
+  background: rgba(0, 0, 0, 0.3) !important;
+  box-shadow: none !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: 8px;
+  transition: all 0.2s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.glass-select .el-input__wrapper:hover,
+.glass-select .el-input__wrapper.is-focus,
+.glass-select .el-select__wrapper:hover,
+.glass-select .el-select__wrapper.is-focused {
+  border-color: var(--accent-primary) !important;
+}
+
+.glass-select .el-input__inner,
+.glass-select .el-select__selected-item,
+.glass-select .el-select__placeholder,
+.glass-select .el-select__input {
+  color: var(--text-primary) !important;
+}
+
+.glass-select .el-input__inner::placeholder,
+.glass-select .el-input__placeholder span {
+  color: var(--text-muted) !important;
+}
+
+.glass-dropdown.el-popper {
+  background: rgba(24, 24, 27, 0.9) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5) !important;
+}
+
+.glass-dropdown .el-select-dropdown__item {
+  color: var(--text-secondary);
+  transition: all 0.2s;
+  border-radius: 6px;
+  margin: 0 4px;
+}
+
+.glass-dropdown .el-select-dropdown__item.is-hovering,
+.glass-dropdown .el-select-dropdown__item:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: var(--text-primary) !important;
+}
+
+.glass-dropdown .el-select-dropdown__item.is-selected {
+  color: var(--accent-primary) !important;
+  font-weight: 600;
+  background: rgba(168, 199, 250, 0.08) !important;
+}
+
+.glass-dropdown .el-select-dropdown__item.is-selected.is-hovering {
+  background: rgba(168, 199, 250, 0.14) !important;
+}
+
+.glass-dropdown .el-popper__arrow::before {
+  background: rgba(24, 24, 27, 0.9) !important;
+  border: 1px solid var(--glass-border) !important;
+}
+
+.glass-dropdown .el-select-group__title {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+/* 原生 select 主题样式 */
+.glass-select-native {
+  appearance: none;
+  -webkit-appearance: none;
+  min-height: 46px;
+  padding: 0 36px 0 14px;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  background-color: rgba(0, 0, 0, 0.3);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239ca3af' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: calc(100% - 12px) center;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 14px;
+  width: 100%;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  outline: none;
+}
+
+.glass-select-native:hover {
+  border-color: rgba(168, 199, 250, 0.3);
+}
+
+.glass-select-native:focus {
+  border-color: var(--accent-primary);
+}
+
+.glass-select-native option {
+  background: #18181b;
+  color: var(--text-primary);
+}
+
+/* 原生 range slider 主题样式 */
+.glass-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  outline: none;
+  cursor: pointer;
+  border: none;
+}
+
+.glass-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  cursor: pointer;
+  box-shadow: 0 0 0 3px rgba(168, 199, 250, 0.15);
+  transition: box-shadow 0.2s;
+}
+
+.glass-range::-webkit-slider-thumb:hover {
+  box-shadow: 0 0 0 5px rgba(168, 199, 250, 0.2);
+}
+
+.glass-range::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 0 0 3px rgba(168, 199, 250, 0.15);
+}
+
+/* 原生 input 主题样式 */
+.glass-input {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.glass-input:hover {
+  border-color: rgba(168, 199, 250, 0.3);
+}
+
+.glass-input:focus {
+  border-color: var(--accent-primary);
+}
+
+.glass-input::placeholder {
+  color: var(--text-muted);
+}
+
+.glass-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.glass-textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.6;
+  outline: none;
+  resize: vertical;
+  transition: border-color 0.2s;
+}
+
+.glass-textarea:hover {
+  border-color: rgba(168, 199, 250, 0.3);
+}
+
+.glass-textarea:focus {
+  border-color: var(--accent-primary);
+}
+
+.glass-textarea::placeholder {
+  color: var(--text-muted);
+}
+
+/* ===== Element Plus 全局暗色主题覆盖 ===== */
+
+/* ---- el-overlay 背景遮罩 ---- */
+.el-overlay {
+  background-color: rgba(0, 0, 0, 0.7) !important;
+  backdrop-filter: blur(4px);
+}
+
+/* ---- el-dialog ---- */
+.el-dialog {
+  background-color: rgba(20, 20, 24, 0.97) !important;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--glass-border) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.65) !important;
+  overflow: hidden;
+}
+
+.el-dialog__header {
+  padding: 20px 24px 18px !important;
+  border-bottom: 1px solid var(--glass-border) !important;
+  margin-right: 0 !important;
+  background: transparent !important;
+}
+
+.el-dialog__title {
+  color: var(--text-primary) !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+}
+
+.el-dialog__headerbtn {
+  top: 16px !important;
+  right: 16px !important;
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 8px;
+  transition: background 0.18s;
+}
+
+.el-dialog__headerbtn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.el-dialog__close {
+  color: var(--text-muted) !important;
+  font-size: 18px !important;
+  transition: color 0.18s !important;
+}
+
+.el-dialog__headerbtn:hover .el-dialog__close {
+  color: var(--text-primary) !important;
+}
+
+.el-dialog__body {
+  padding: 20px 24px !important;
+  color: var(--text-primary) !important;
+}
+
+.el-dialog__footer {
+  padding: 16px 24px !important;
+  border-top: 1px solid var(--glass-border) !important;
+  background: transparent !important;
+}
+
+/* ---- el-input ---- */
+.el-input__wrapper {
+  background-color: rgba(0, 0, 0, 0.3) !important;
+  box-shadow: 0 0 0 1px var(--glass-border) inset !important;
+  border-radius: 10px !important;
+  transition: box-shadow 0.2s !important;
+}
+
+.el-input__wrapper:hover {
+  box-shadow: 0 0 0 1px rgba(168, 199, 250, 0.35) inset !important;
+}
+
+.el-input__wrapper.is-focus {
+  box-shadow: 0 0 0 1px var(--accent-primary) inset !important;
+}
+
+.el-input__inner {
+  color: var(--text-primary) !important;
+  background-color: transparent !important;
+}
+
+.el-input__inner::placeholder {
+  color: var(--text-muted) !important;
+}
+
+/* ---- el-textarea ---- */
+.el-textarea__inner {
+  background-color: rgba(0, 0, 0, 0.3) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: 10px !important;
+  color: var(--text-primary) !important;
+  box-shadow: none !important;
+  font-family: inherit !important;
+  resize: vertical;
+  transition: border-color 0.2s !important;
+}
+
+.el-textarea__inner:hover {
+  border-color: rgba(168, 199, 250, 0.35) !important;
+}
+
+.el-textarea__inner:focus {
+  border-color: var(--accent-primary) !important;
+  box-shadow: none !important;
+}
+
+.el-textarea__inner::placeholder {
+  color: var(--text-muted) !important;
+}
+
+/* ---- el-form-item label ---- */
+.el-form-item__label {
+  color: var(--text-secondary) !important;
+  font-weight: 500 !important;
+}
+
+/* ---- el-input-number ---- */
+.el-input-number .el-input-number__decrease,
+.el-input-number .el-input-number__increase {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-color: var(--glass-border) !important;
+  color: var(--text-secondary) !important;
+  transition: color 0.18s, background 0.18s !important;
+}
+
+.el-input-number .el-input-number__decrease:hover,
+.el-input-number .el-input-number__increase:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: var(--accent-primary) !important;
+}
+
+/* ---- 通用原生 input/textarea/select 基础样式 ---- */
+.glass-field-input {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--glass-border);
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.glass-field-input:hover {
+  border-color: rgba(168, 199, 250, 0.3);
+}
+
+.glass-field-input:focus {
+  border-color: var(--accent-primary);
+}
+
+.glass-field-input::placeholder {
+  color: var(--text-muted);
+}
+
+/* ---- 自定义 checkbox ---- */
+.glass-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.glass-checkbox input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  border: 1px solid var(--glass-border);
+  background: rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+  transition: all 0.18s;
+}
+
+.glass-checkbox input[type="checkbox"]:hover {
+  border-color: rgba(168, 199, 250, 0.4);
+}
+
+.glass-checkbox input[type="checkbox"]:checked {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+}
+
+.glass-checkbox input[type="checkbox"]:checked::after {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 2px;
+  width: 5px;
+  height: 9px;
+  border: 2px solid #0a0a0a;
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg);
+}
